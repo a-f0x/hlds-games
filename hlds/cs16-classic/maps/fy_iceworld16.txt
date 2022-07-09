@@ -1,0 +1,16 @@
+// overview description file for fy_iceworld16.bsp
+
+global 
+{
+	ZOOM	4.00
+	ORIGIN	0 	0	208
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/fy_iceworld16.bmp"
+	HEIGHT	-1
+}
+
+Overview: Zoom 4.00, Map Origin (0.00, 0.00, 208.00), Z Min 417.00, Z Max -1.00, Rotated 0 

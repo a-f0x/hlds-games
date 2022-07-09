@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.21-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    expose:
+      - "5672"
+      - "15672"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 384M
+
+  cs16-classic:
+    #    restart: always
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds:latest
+    #    image: hldslocal:latest
+    #    image: hlds/server
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      GAME_TYPE: cs-classic
+
+    volumes:
+      - ./hlds/cs16-classic/mapcycle.txt:/hlds/cstrike/mapcycle.txt
+      - ./hlds/cs16-classic/server.cfg:/hlds/cstrike/server.cfg
+      - ./hlds/cs16-classic/maps:/hlds/cstrike/maps
+      - ./cmd/game_agent:/hlds/game_agent
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27015/tcp"
+      - "27015/udp"
+    ports:
+      - "27015:27015/tcp"
+      - "27015:27015/udp"
+    command: [
+      "sh","-c","./game_agent"
+    ]
+
+networks:
+  default:
+    external: true
+    name: hlds-net
