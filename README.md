@@ -13,7 +13,7 @@
   ``cs-dm`` - контр-страйк дезматч
 
 ## Как запустить
-
+``rm game_agent && CGO_ENABLED=0 go build game_agent.go``
 Запускаешь ``docker-compose up``
 
 Затем в консоли Counter-Strike 1.6  ``connect 127.0.0.1:27015``
