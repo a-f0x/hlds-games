@@ -55,6 +55,8 @@ var playerConnected = func(event []byte) *Event {
 			Time:   eventMatch.time,
 			Player: Player{
 				NickName: eventMatch.matches[1],
+				Id:       eventMatch.matches[2],
+				SteamId:  eventMatch.matches[3],
 				Team:     common.StringOrNil(eventMatch.matches[4]),
 			},
 		}
@@ -70,6 +72,8 @@ var playerDisconnected = func(event []byte) *Event {
 			Time:   eventMatch.time,
 			Player: Player{
 				NickName: eventMatch.matches[1],
+				Id:       eventMatch.matches[2],
+				SteamId:  eventMatch.matches[3],
 				Team:     common.StringOrNil(eventMatch.matches[4]),
 			},
 		}
@@ -85,11 +89,15 @@ var kill = func(event []byte) *Event {
 			Time:   eventMatch.time,
 			Player: Player{
 				NickName: eventMatch.matches[1],
+				Id:       eventMatch.matches[2],
+				SteamId:  eventMatch.matches[3],
 				Team:     common.StringOrNil(eventMatch.matches[4]),
 			},
 			Kill: &Kill{
 				Victim: Player{
 					NickName: eventMatch.matches[5],
+					Id:       eventMatch.matches[6],
+					SteamId:  eventMatch.matches[7],
 					Team:     common.StringOrNil(eventMatch.matches[8]),
 				},
 				Weapon: eventMatch.matches[9],
@@ -107,6 +115,8 @@ var suicide = func(event []byte) *Event {
 			Time:   eventMatch.time,
 			Player: Player{
 				NickName: eventMatch.matches[1],
+				Id:       eventMatch.matches[2],
+				SteamId:  eventMatch.matches[3],
 				Team:     common.StringOrNil(eventMatch.matches[4]),
 			},
 			Suicide: &Suicide{Weapon: eventMatch.matches[5]},
@@ -123,6 +133,8 @@ var joinTeam = func(event []byte) *Event {
 			Time:   eventMatch.time,
 			Player: Player{
 				NickName: eventMatch.matches[1],
+				Id:       eventMatch.matches[2],
+				SteamId:  eventMatch.matches[3],
 				Team:     common.StringOrNil(eventMatch.matches[5]),
 			},
 		}

@@ -17,6 +17,8 @@ type Event struct {
 }
 type Player struct {
 	NickName string
+	Id       string
+	SteamId  string
 	Team     *string
 }
 

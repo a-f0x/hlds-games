@@ -31,6 +31,8 @@ type HeartBeatMessagePayload struct {
 
 type Player struct {
 	NickName string  `json:"nick_name"`
+	Id       string  `json:"id"`
+	SteamId  string  `json:"steam_id"`
 	Team     *string `json:"team"`
 }
 type Kill struct {

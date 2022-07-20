@@ -15,6 +15,13 @@ func TestPlayerConnected(t *testing.T) {
 	if got.Player.NickName != "Player" {
 		t.Errorf("Actual: %s, Expected: %s", got.Player.NickName, "Player")
 	}
+	if got.Player.Id != "1" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.Id, "Id")
+	}
+	if got.Player.SteamId != "VALVE_ID_LAN" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.SteamId, "VALVE_ID_LAN")
+	}
+
 	if got.Player.Team != nil {
 		t.Errorf("Actual: %s, Expected: nil", *got.Player.Team)
 	}
@@ -38,6 +45,12 @@ func TestPlayerDisconnected(t *testing.T) {
 	}
 	if got.Player.NickName != "Player" {
 		t.Errorf("Actual: %s, Expected: %s", got.Player.NickName, "Player")
+	}
+	if got.Player.Id != "1" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.Id, "Id")
+	}
+	if got.Player.SteamId != "VALVE_ID_LAN" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.SteamId, "VALVE_ID_LAN")
 	}
 	if *got.Player.Team != "TERRORIST" {
 		t.Errorf("Actual: %s, Expected: TERRORIST", *got.Player.Team)
@@ -67,6 +80,13 @@ func TestKill(t *testing.T) {
 	if *got.Player.Team != "CT" {
 		t.Errorf("Actual: %s, Expected: CT", *got.Player.Team)
 	}
+	if got.Player.Id != "1" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.Id, "Id")
+	}
+	if got.Player.SteamId != "VALVE_ID_LAN" {
+		t.Errorf("Actual: %s, Expected: %s", got.Player.SteamId, "VALVE_ID_LAN")
+	}
+
 	if got.Kill == nil {
 		t.Errorf("Kill is nil")
 	}
@@ -74,6 +94,13 @@ func TestKill(t *testing.T) {
 	if kill.Victim.NickName != "asus" {
 		t.Errorf("Actual: %s, Expected: %s", kill.Victim.NickName, "asus")
 	}
+	if kill.Victim.Id != "2" {
+		t.Errorf("Actual: %s, Expected: %s", kill.Victim.Id, "Id")
+	}
+	if kill.Victim.SteamId != "VALVE_ID_LAN" {
+		t.Errorf("Actual: %s, Expected: %s", kill.Victim.SteamId, "VALVE_ID_LAN")
+	}
+
 	if *kill.Victim.Team != "TERRORIST" {
 		t.Errorf("Actual: %s, Expected: %s", *kill.Victim.Team, "TERRORIST")
 	}

@@ -17,6 +17,8 @@ func newActionMessagePayload(logEvent log.Event) messages.ActionMessagePayload {
 func newMessagePlayer(player log.Player) messages.Player {
 	return messages.Player{
 		NickName: player.NickName,
+		Id:       player.Id,
+		SteamId:  player.SteamId,
 		Team:     player.Team,
 	}
 }
