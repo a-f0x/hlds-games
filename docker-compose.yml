@@ -32,6 +32,9 @@ services:
           memory: 384M
 
   cs16-classic:
+    profiles:
+      - all
+      - cs-classic
     depends_on:
       - rabbitmq
     image: af0x/hlds:cs-classic
@@ -62,7 +65,45 @@ services:
     command: [
       "sh","-c","./game_agent"
     ]
+  cs16-dm:
+    profiles:
+      - all
+      - csdm
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds:cs-dm
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      GAME_TYPE: cs-classic
+
+    volumes:
+      - ./hlds/cs16-deathmatch/mapcycle.txt:/hlds/cstrike/mapcycle.txt
+      - ./hlds/cs16-deathmatch/server.cfg:/hlds/cstrike/server.cfg
+      - ./hlds/cs16-deathmatch/maps:/hlds/cstrike/maps
+      - ./cmd/game_agent:/hlds/game_agent
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27015/tcp"
+      - "27015/udp"
+    ports:
+      - "27017:27015/tcp"
+      - "27017:27015/udp"
+    command: [
+      "sh","-c","./game_agent"
+    ]
+
   half-life:
+    profiles:
+      - all
+      - hl
     depends_on:
       - rabbitmq
     image: af0x/hlds:hl-classic
