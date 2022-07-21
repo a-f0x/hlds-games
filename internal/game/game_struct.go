@@ -34,7 +34,10 @@ func (h *hldsGames) runGame(gameType string) error {
 	case counterStrike:
 		command = fmt.Sprintf("./hlds_run -game cstrike +rcon_password %s +port %d +maxplayers 32 +map de_dust2 +logaddress 127.0.0.1 %d",
 			h.rconPassword, h.hldsServerPort, h.logReceiverPort)
-	case halfLife, counterStrikeDeadMatch:
+	case halfLife:
+		command = fmt.Sprintf("./hlds_run -game valve +rcon_password %s +port %d +maxplayers 32 +map crossfire +logaddress 127.0.0.1 %d",
+			h.rconPassword, h.hldsServerPort, h.logReceiverPort)
+	case counterStrikeDeadMatch:
 		return errors.New(fmt.Sprintf("Game type: %s not implemented", gameType))
 	default:
 		return errors.New(fmt.Sprintf("Unknown game type: %s. Available type is %v", gameType, h.games))

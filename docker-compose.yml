@@ -32,12 +32,11 @@ services:
           memory: 384M
 
   cs16-classic:
-    #    restart: always
+    profiles:
+      - noooop
     depends_on:
       - rabbitmq
-    image: af0x/hlds:clean
-    #    image: hldslocal:latest
-    #    image: hlds/server
+    image: af0x/hlds:cs-classic
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
@@ -62,6 +61,37 @@ services:
     ports:
       - "27015:27015/tcp"
       - "27015:27015/udp"
+    command: [
+      "sh","-c","./game_agent"
+    ]
+  half-life:
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds:hl-classic
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      GAME_TYPE: half-life
+
+    volumes:
+      - ./hlds/half-life/mapcycle.txt:/hlds/valve/mapcycle.txt
+      - ./hlds/half-life/server.cfg:/hlds/valve/server.cfg
+      - ./hlds/half-life/maps:/hlds/valve/maps
+      - ./cmd/game_agent:/hlds/game_agent
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27015/tcp"
+      - "27015/udp"
+    ports:
+      - "27016:27015/tcp"
+      - "27016:27015/udp"
     command: [
       "sh","-c","./game_agent"
     ]
