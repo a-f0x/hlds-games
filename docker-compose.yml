@@ -32,8 +32,6 @@ services:
           memory: 384M
 
   cs16-classic:
-    profiles:
-      - noooop
     depends_on:
       - rabbitmq
     image: af0x/hlds:cs-classic
