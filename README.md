@@ -13,10 +13,15 @@
   ``cs-dm`` - контр-страйк дезматч
 
 ## Как запустить
-``rm game_agent && CGO_ENABLED=0 go build game_agent.go``
-Запускаешь ``docker-compose up``
 
-Затем в консоли Counter-Strike 1.6  ``connect 127.0.0.1:27015``
+Сначала нужно собрать бинарь:
+
+`` DOCKER_BUILDKIT=1 docker build --output type=local,dest=out .``
+
+Затем запустить ``docker-compose --profile=csdm up``, где в профиле указать какой контейнер с игрой должен быть запущен,
+```all``` - запустить всё. Смотри профили в ``docker-compose.yml``
+
+Затем в консоли Counter-Strike 1.6  ``connect 127.0.0.1:27017``
 
 События можно посмотреть в очередях [rabbit](http://localhost:15672/#/queues/%2F/game-action)
 
