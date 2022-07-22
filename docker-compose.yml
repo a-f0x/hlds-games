@@ -37,7 +37,7 @@ services:
       - cs-classic
     depends_on:
       - rabbitmq
-    image: af0x/hlds:cs-classic
+    image: af0x/hlds:cs-addons
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
@@ -83,6 +83,7 @@ services:
       - ./hlds/cs16-deathmatch/mapcycle.txt:/hlds/cstrike/mapcycle.txt
       - ./hlds/cs16-deathmatch/server.cfg:/hlds/cstrike/server.cfg
       - ./hlds/cs16-deathmatch/maps:/hlds/cstrike/maps
+      - ./data/csstats.dat:/hlds/cstrike/addons/amxmodx/data/csstats.dat
       - ./out/game_agent:/hlds/game_agent
     deploy:
       resources:

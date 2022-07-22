@@ -50,3 +50,20 @@ type ActionMessagePayload struct {
 	Kill       *Kill    `json:"kill"`
 	Suicide    *Suicide `json:"suicide"`
 }
+
+type PlayerStats struct {
+	NickName       string `json:"nick_name"`
+	SteamId        string `json:"steam_id"`
+	TeamKills      uint32 `json:"team_kills"`
+	Damage         uint32 `json:"damage"`
+	Deaths         uint32 `json:"deaths"`
+	Kills          uint32 `json:"kills"`
+	BodyHits       [9]uint32
+	Shots          uint32 `json:"shots"`
+	Hits           uint32 `json:"hits"`
+	HeadShots      uint32 `json:"head_shots"`
+	BombDefusions  uint32 `json:"bomb_defusion"`
+	BombDefused    uint32 `json:"bomb_defused"`
+	BombPlants     uint32 `json:"bomb_plants"`
+	BombExplosions uint32 `json:"bomb_explosions"`
+}
