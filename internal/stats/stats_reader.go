@@ -2,11 +2,13 @@ package stats
 
 import (
 	"encoding/binary"
-	"fmt"
+	"log"
 )
 
-// how the statistics file was written
+// откопал исходники того как пишется стата стандартая
 //https://github.com/alliedmodders/amxmodx/blob/ff2b5142f9c4213beee8646d50609cfed315202e/modules/tfcx/CRank.cpp#L308
+
+const supportedStatsVersion uint16 = 11
 
 type Reader struct {
 	data   []byte
@@ -38,6 +40,7 @@ func (s *Reader) readString(length uint16) string {
 }
 func (s *Reader) ReadStats() []PlayerStats {
 	stats := func(length uint16) PlayerStats {
+		//читать байты именно в таком порядке!
 		name := s.readString(length)
 		length = s.readUint16()
 		steamId := s.readString(length)
@@ -56,7 +59,6 @@ func (s *Reader) ReadStats() []PlayerStats {
 		for i := 0; i < len(bodyHits); i++ {
 			bodyHits[i] = s.readUint32()
 		}
-		fmt.Printf("bodyHits: %v\n", bodyHits)
 		return PlayerStats{
 			NickName:       name,
 			SteamId:        steamId,
@@ -76,15 +78,16 @@ func (s *Reader) ReadStats() []PlayerStats {
 
 	}
 	version := s.readUint16()
-	fmt.Printf("stat version: %d\n", version)
+	if version != supportedStatsVersion {
+		log.Printf("unsupported stats version = %d", version)
+		return nil
+	}
 	arr := make([]PlayerStats, 0)
-
 	length := s.readUint16()
 	for length > 0 {
 		r := stats(length)
 		arr = append(arr, r)
 		length = s.readUint16()
 	}
-
 	return arr
 }
