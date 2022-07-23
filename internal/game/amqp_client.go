@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	gameEventsExchange        = "hlds-games"
+	gameEventsExchange        = "docker-games"
 	heartBeatQueue            = "heart-beat"
 	gameEventsQueue           = "game-action"
 	contentType               = "application/json"
