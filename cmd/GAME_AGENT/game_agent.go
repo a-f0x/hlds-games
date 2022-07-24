@@ -19,8 +19,17 @@ func main() {
 		}
 		return nil
 	}
-	amqpPort, _ := strconv.ParseInt(*getEnv("RABBITMQ_PORT"), 10, 64)
+	amqpPort, err := strconv.ParseInt(*getEnv("RABBITMQ_PORT"), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
+	}
+	hldsServerPort, err := strconv.ParseInt(*getEnv("PORT"), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid game PORT %s", err.Error())
+	}
+
 	ga := game.NewLauncher(
+		hldsServerPort,
 		*getEnv("GAME_TYPE"),
 		*getEnv("RCON_PASSWORD"),
 		make(chan *messages.Message[messages.HeartBeatMessagePayload]),
@@ -33,7 +42,7 @@ func main() {
 		*getEnv("RABBITMQ_PASSWORD"),
 	)
 
-	err := amqpClient.Connect()
+	err = amqpClient.Connect()
 	if err != nil {
 		log.Fatalf("error connect to ampq %s", err)
 	}

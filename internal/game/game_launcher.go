@@ -11,30 +11,36 @@ import (
 
 const (
 	logReceiverPort int64  = 9654
-	hldsServerPort  int64  = 27015
 	hldsServerHost  string = "127.0.0.1"
 )
 
 type Launcher struct {
-	gameType     string
-	rconPassword string
-	rcon         *rcon.Rcon
-	logReceiver  *logReceiver.Receiver
-	HeartBeat    chan *messages.Message[messages.HeartBeatMessagePayload]
-	Action       chan *messages.Message[messages.ActionMessagePayload]
-	isConnected  *common.AtomicBool
+	hldsServerPort int64
+	gameType       string
+	rconPassword   string
+	rcon           *rcon.Rcon
+	logReceiver    *logReceiver.Receiver
+	HeartBeat      chan *messages.Message[messages.HeartBeatMessagePayload]
+	Action         chan *messages.Message[messages.ActionMessagePayload]
+	isConnected    *common.AtomicBool
 }
 
-func NewLauncher(gameType string, rconPassword string, heartBeat chan *messages.Message[messages.HeartBeatMessagePayload],
-	action chan *messages.Message[messages.ActionMessagePayload]) *Launcher {
+func NewLauncher(
+	hldsServerPort int64,
+	gameType string,
+	rconPassword string,
+	heartBeat chan *messages.Message[messages.HeartBeatMessagePayload],
+	action chan *messages.Message[messages.ActionMessagePayload],
+) *Launcher {
 	return &Launcher{
-		gameType:     gameType,
-		rconPassword: rconPassword,
-		logReceiver:  logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
-		rcon:         rcon.NewRcon(hldsServerHost, hldsServerPort, rconPassword),
-		HeartBeat:    heartBeat,
-		Action:       action,
-		isConnected:  new(common.AtomicBool),
+		hldsServerPort: hldsServerPort,
+		gameType:       gameType,
+		rconPassword:   rconPassword,
+		logReceiver:    logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
+		rcon:           rcon.NewRcon(hldsServerHost, hldsServerPort, rconPassword),
+		HeartBeat:      heartBeat,
+		Action:         action,
+		isConnected:    new(common.AtomicBool),
 	}
 }
 
@@ -54,7 +60,7 @@ func (a *Launcher) RunGame() {
 }
 
 func (a *Launcher) startGame() {
-	err := newHldsGames(a.rconPassword, hldsServerPort, logReceiverPort).runGame(a.gameType)
+	err := newHldsGames(a.rconPassword, a.hldsServerPort, logReceiverPort).runGame(a.gameType)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

@@ -43,8 +43,8 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27015
       GAME_TYPE: cs-classic
-
     volumes:
       - ./docker/cs/mapcycle.txt:/hlds/cstrike/mapcycle.txt
       - ./docker/cs/server.cfg:/hlds/cstrike/server.cfg
@@ -76,6 +76,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27017
       GAME_TYPE: cs-dm
     volumes:
       - ./docker/csdm/mapcycle.txt:/hlds/cstrike/mapcycle.txt
@@ -91,11 +92,11 @@ services:
           cpus: '2.5'
           memory: 512M
     expose:
-      - "27015/tcp"
-      - "27015/udp"
+      - "27017/tcp"
+      - "27017/udp"
     ports:
-      - "27017:27015/tcp"
-      - "27017:27015/udp"
+      - "27017:27017/tcp"
+      - "27017:27017/udp"
     entrypoint: ./game_agent
   half-life:
     profiles:
@@ -110,6 +111,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27016
       GAME_TYPE: half-life
 
     volumes:
@@ -124,11 +126,11 @@ services:
           cpus: '2.5'
           memory: 512M
     expose:
-      - "27015/tcp"
-      - "27015/udp"
+      - "27016/tcp"
+      - "27016/udp"
     ports:
-      - "27016:27015/tcp"
-      - "27016:27015/udp"
+      - "27016:27016/tcp"
+      - "27016:27016/udp"
     entrypoint: ./game_agent
 networks:
   default:
