@@ -106,7 +106,7 @@ services:
       - hl
     depends_on:
       - rabbitmq
-    image: af0x/rehlds:base
+    image: af0x/rehlds:hl-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
