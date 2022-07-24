@@ -32,6 +32,12 @@ services:
         limits:
           cpus: '1.5'
           memory: 384M
+  fast-download:
+    image: af0x/rehlds-fastdl
+    ports:
+      - "2750:80"
+    volumes:
+      - ./resources
   cs:
     restart: always
     profiles:
