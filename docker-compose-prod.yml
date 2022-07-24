@@ -33,6 +33,7 @@ services:
           cpus: '1.5'
           memory: 384M
   fast-download:
+    restart: always
     image: af0x/rehlds-fastdl
     ports:
       - "2750:80"
