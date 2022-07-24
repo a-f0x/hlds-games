@@ -30,6 +30,7 @@ func main() {
 
 	ga := game.NewLauncher(
 		hldsServerPort,
+		*getEnv("MAP"),
 		*getEnv("GAME_TYPE"),
 		*getEnv("RCON_PASSWORD"),
 		make(chan *messages.Message[messages.HeartBeatMessagePayload]),

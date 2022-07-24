@@ -16,6 +16,7 @@ const (
 
 type Launcher struct {
 	hldsServerPort int64
+	gMap           string
 	gameType       string
 	rconPassword   string
 	rcon           *rcon.Rcon
@@ -27,6 +28,7 @@ type Launcher struct {
 
 func NewLauncher(
 	hldsServerPort int64,
+	gMap string,
 	gameType string,
 	rconPassword string,
 	heartBeat chan *messages.Message[messages.HeartBeatMessagePayload],
@@ -34,6 +36,7 @@ func NewLauncher(
 ) *Launcher {
 	return &Launcher{
 		hldsServerPort: hldsServerPort,
+		gMap:           gMap,
 		gameType:       gameType,
 		rconPassword:   rconPassword,
 		logReceiver:    logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
@@ -60,7 +63,7 @@ func (a *Launcher) RunGame() {
 }
 
 func (a *Launcher) startGame() {
-	err := newHldsGames(a.rconPassword, a.hldsServerPort, logReceiverPort).runGame(a.gameType)
+	err := newHldsGames(a.rconPassword, a.hldsServerPort, logReceiverPort).runGame(a.gameType, a.gMap)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

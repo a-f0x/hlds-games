@@ -44,6 +44,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27015
+      MAP: de_dust2_2x2
       GAME_TYPE: cs-classic
     volumes:
       - ./docker/cs/mapcycle.txt:/hlds/cstrike/mapcycle.txt
@@ -77,6 +78,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27017
+      MAP: de_dust2_2x2
       GAME_TYPE: cs-dm
     volumes:
       - ./docker/csdm/mapcycle.txt:/hlds/cstrike/mapcycle.txt
@@ -112,6 +114,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27016
+      MAP: 1337_Street
       GAME_TYPE: half-life
 
     volumes:

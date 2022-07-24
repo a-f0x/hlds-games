@@ -28,15 +28,15 @@ func newHldsGames(rconPassword string, hldsServerPort int64, logReceiverPort int
 		logReceiverPort: logReceiverPort,
 	}
 }
-func (h *hldsGames) runGame(gameType string) error {
+func (h *hldsGames) runGame(gameType string, gMap string) error {
 	var command string
 	switch gameType {
 	case counterStrike, counterStrikeDeadMatch:
-		command = fmt.Sprintf("./hlds_run -game cstrike +rcon_password %s +port %d +maxplayers 32 +map de_dust2 +logaddress 127.0.0.1 %d",
-			h.rconPassword, h.hldsServerPort, h.logReceiverPort)
+		command = fmt.Sprintf("./hlds_run -game cstrike +rcon_password %s +port %d +maxplayers 32 +map %s +logaddress 127.0.0.1 %d",
+			h.rconPassword, h.hldsServerPort, gMap, h.logReceiverPort)
 	case halfLife:
-		command = fmt.Sprintf("./hlds_run -game valve +rcon_password %s +port %d +maxplayers 32 +map crossfire +logaddress 127.0.0.1 %d",
-			h.rconPassword, h.hldsServerPort, h.logReceiverPort)
+		command = fmt.Sprintf("./hlds_run -game valve +rcon_password %s +port %d +maxplayers 32 +map %s +logaddress 127.0.0.1 %d",
+			h.rconPassword, h.hldsServerPort, gMap, h.logReceiverPort)
 	default:
 		return errors.New(fmt.Sprintf("Unknown game type: %s. Available type is %v", gameType, h.games))
 	}
