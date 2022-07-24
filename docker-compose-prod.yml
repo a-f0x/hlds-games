@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   mariadb:
+    restart: always
     image: mariadb:10.7.4
     ports:
       - "3306:3306"
@@ -15,6 +16,7 @@ services:
     volumes:
       - ./mariadb:/var/lib/mysql
   rabbitmq:
+    restart: always
     image: rabbitmq:3.9.21-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
@@ -31,6 +33,7 @@ services:
           cpus: '1.5'
           memory: 384M
   cs:
+    restart: always
     profiles:
       - all
       - cs
@@ -64,6 +67,7 @@ services:
       - "27015:27015/tcp"
       - "27015:27015/udp"
   csdm:
+    restart: always
     profiles:
       - all
       - csdm
@@ -96,6 +100,7 @@ services:
       - "27017:27017/tcp"
       - "27017:27017/udp"
   half-life:
+    restart: always
     profiles:
       - all
       - hl
