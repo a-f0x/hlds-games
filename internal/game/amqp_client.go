@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	gameEventsExchange        = "docker-games"
-	heartBeatQueue            = "heart-beat"
-	gameEventsQueue           = "game-action"
-	contentType               = "application/json"
-	reconnectSec              = 3
-	stateDisconnected  uint32 = 0
-	stateConnected     uint32 = 1
-	stateConnecting    uint32 = 2
+	gameEventsExchange              = "hlds-games"
+	heartBeatQueue                  = "heart-beat"
+	gameEventsQueue                 = "game-action"
+	contentType                     = "application/json"
+	messageExpirationTimeSec        = "60000" //60 sec
+	reconnectSec                    = 3
+	stateDisconnected        uint32 = 0
+	stateConnected           uint32 = 1
+	stateConnecting          uint32 = 2
 )
 
 type AmqpGameClient struct {
@@ -162,6 +163,7 @@ func (agc *AmqpGameClient) send(message []byte, queue string) error {
 			false,
 			false,
 			amqp.Publishing{
+				Expiration:  messageExpirationTimeSec,
 				ContentType: contentType,
 				Body:        message,
 			})
