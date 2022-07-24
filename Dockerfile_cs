@@ -1,0 +1,4 @@
+FROM af0x/rehlds:cs-nosteam
+COPY ./docker/cs/maps ./cstrike/maps
+COPY ./out/game_agent ./game_agent
+ENTRYPOINT ./game_agent

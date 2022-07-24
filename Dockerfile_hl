@@ -1,0 +1,4 @@
+FROM af0x/rehlds:hl-nosteam
+COPY ./docker/half-life/maps ./valve/maps
+COPY ./out/game_agent ./game_agent
+ENTRYPOINT ./game_agent
