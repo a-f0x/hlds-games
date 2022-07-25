@@ -1,0 +1,146 @@
+version: "3.8"
+
+services:
+  mariadb:
+    restart: always
+    image: mariadb:10.7.4
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: S3cret
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    volumes:
+      - ./mariadb:/var/lib/mysql
+  rabbitmq:
+    restart: always
+    image: rabbitmq:3.9.21-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    expose:
+      - "5672"
+      - "15672"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 384M
+  fast-download:
+    restart: always
+    image: af0x/rehlds-fastdl
+    ports:
+      - "2750:80"
+    volumes:
+      - ./resources
+  cs:
+    restart: always
+    profiles:
+      - all
+      - cs
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds-agent:cs-nosteam
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27015
+      MAP: de_dust2_2x2
+      GAME_TYPE: cs-classic
+    volumes:
+      - ./docker/cs/maps.ini:/hlds/cstrike/addons/amxmodx/configs/maps.ini
+      - ./docker/cs/server.cfg:/hlds/cstrike/server.cfg
+      #      - ./docker/cs/maps:/hlds/cstrike/maps
+      - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
+    #      - ./out/game_agent:/hlds/game_agent
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27015/tcp"
+      - "27015/udp"
+    ports:
+      - "27015:27015/tcp"
+      - "27015:27015/udp"
+  csdm:
+    restart: always
+    profiles:
+      - all
+      - csdm
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds-agent:csdm-nosteam
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27017
+      MAP: de_dust2_2x2
+      GAME_TYPE: cs-dm
+    volumes:
+      - ./docker/csdm/maps.ini:/hlds/cstrike/addons/amxmodx/configs/maps.ini
+      - ./docker/csdm/server.cfg:/hlds/cstrike/server.cfg
+      #      - ./docker/csdm/maps:/hlds/cstrike/maps
+      - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27017/tcp"
+      - "27017/udp"
+    ports:
+      - "27017:27017/tcp"
+      - "27017:27017/udp"
+  half-life:
+    restart: always
+    profiles:
+      - all
+      - hl
+    depends_on:
+      - rabbitmq
+    image: af0x/hlds-agent:hl-nosteam
+    environment:
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      PORT: 27016
+      MAP: 1337_Street
+      GAME_TYPE: half-life
+
+    volumes:
+      - ./docker/half-life/maps.ini:/hlds/valve/addons/amxmodx/configs/maps.ini
+      - ./docker/half-life/server.cfg:/hlds/valve/server.cfg
+      #      - ./docker/half-life/maps:/hlds/valve/maps
+      - ./docker/users.ini:/hlds/valve/addons/amxmodx/configs/users.ini
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 512M
+    expose:
+      - "27016/tcp"
+      - "27016/udp"
+    ports:
+      - "27016:27016/tcp"
+      - "27016:27016/udp"
+networks:
+  default:
+    external: true
+    name: hlds-net

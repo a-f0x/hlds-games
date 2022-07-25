@@ -1,0 +1,6 @@
+Map name: de_dust_arena.
+Version map: Counter Strike 1.6
+Category: Bomb\Defuse
+
+Download from cs-files.net (rus).
+In site cs-files.net there is still more than 5000 maps.
