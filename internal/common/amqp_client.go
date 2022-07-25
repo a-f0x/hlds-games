@@ -15,7 +15,7 @@ const (
 	HeartBeatQueue            = "heart-beat"
 	GameEventsQueue           = "game-action"
 	contentType               = "application/json"
-	reconnectSec              = 3
+	reconnectSec              = 2
 	stateDisconnected  uint32 = 0
 	stateConnected     uint32 = 1
 	stateConnecting    uint32 = 2
@@ -64,7 +64,7 @@ func (ac *AmqpClient) tryConnect() error {
 		return ac.tryConnect()
 	}
 
-	ch, err := createChannel(conn, gameEventsExchange)
+	ch, err := createChannel(conn)
 	if err != nil {
 		ac.setConnectionStateDisconnected()
 		err := conn.Close()
@@ -79,15 +79,15 @@ func (ac *AmqpClient) tryConnect() error {
 	return nil
 }
 
-func createChannel(connection *amqp.Connection, name string) (*amqp.Channel, error) {
+func createChannel(connection *amqp.Connection) (*amqp.Channel, error) {
 	ch, err := connection.Channel()
 	if err != nil {
 		return nil, err
 	}
 	err = ch.ExchangeDeclare(
-		name,
+		gameEventsExchange,
 		"direct",
-		true,
+		false,
 		false,
 		false,
 		false,
@@ -98,7 +98,7 @@ func createChannel(connection *amqp.Connection, name string) (*amqp.Channel, err
 	}
 	_, err = ch.QueueDeclare(
 		HeartBeatQueue,
-		true,
+		false,
 		false,
 		false,
 		false,
@@ -110,7 +110,7 @@ func createChannel(connection *amqp.Connection, name string) (*amqp.Channel, err
 
 	_, err = ch.QueueDeclare(
 		GameEventsQueue,
-		true,
+		false,
 		false,
 		false,
 		false,
