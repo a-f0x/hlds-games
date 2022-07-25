@@ -12,15 +12,16 @@ import (
 )
 
 const (
-	gameEventsExchange              = "hlds-games"
-	heartBeatQueue                  = "heart-beat"
-	gameEventsQueue                 = "game-action"
-	contentType                     = "application/json"
-	messageExpirationTimeSec        = "60000" //60 sec
-	reconnectSec                    = 3
-	stateDisconnected        uint32 = 0
-	stateConnected           uint32 = 1
-	stateConnecting          uint32 = 2
+	gameEventsExchange               = "hlds-games"
+	heartBeatQueue                   = "heart-beat"
+	gameEventsQueue                  = "game-action"
+	contentType                      = "application/json"
+	actionExpirationTimeMs           = "15000" //15 sec
+	heartBeatExpirationTimeMs        = "2000"  //2 sec
+	reconnectSec                     = 3
+	stateDisconnected         uint32 = 0
+	stateConnected            uint32 = 1
+	stateConnecting           uint32 = 2
 )
 
 type AmqpGameClient struct {
@@ -143,19 +144,19 @@ func createChannel(connection *amqp.Connection, name string) (*amqp.Channel, err
 }
 
 func (agc *AmqpGameClient) SendHeartBeat(message messages.Message[messages.HeartBeatMessagePayload]) error {
-	return agc.marshalAndSend(message, heartBeatQueue)
+	return agc.marshalAndSend(message, heartBeatQueue, heartBeatExpirationTimeMs)
 }
 
 func (agc *AmqpGameClient) SendGameEvent(message messages.Message[messages.ActionMessagePayload]) error {
-	return agc.marshalAndSend(message, gameEventsQueue)
+	return agc.marshalAndSend(message, gameEventsQueue, actionExpirationTimeMs)
 }
 
-func (agc *AmqpGameClient) marshalAndSend(message any, queue string) error {
+func (agc *AmqpGameClient) marshalAndSend(message any, queue string, expirationMs string) error {
 	bytes, _ := json.Marshal(message)
-	return agc.send(bytes, queue)
+	return agc.send(bytes, queue, expirationMs)
 }
 
-func (agc *AmqpGameClient) send(message []byte, queue string) error {
+func (agc *AmqpGameClient) send(message []byte, queue string, expirationMs string) error {
 	if agc.isConnected() {
 		err := agc.gameEventAmqpChannel.Publish(
 			gameEventsExchange,
@@ -163,7 +164,7 @@ func (agc *AmqpGameClient) send(message []byte, queue string) error {
 			false,
 			false,
 			amqp.Publishing{
-				Expiration:  messageExpirationTimeSec,
+				Expiration:  expirationMs,
 				ContentType: contentType,
 				Body:        message,
 			})
