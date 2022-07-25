@@ -1,8 +1,8 @@
-package game
+package launcher
 
 import (
 	"hlds-games/internal/log"
-	"hlds-games/pkg/messages"
+	"hlds-games/internal/messages"
 )
 
 func newActionMessagePayload(logEvent log.Event) messages.ActionMessagePayload {

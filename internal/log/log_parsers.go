@@ -1,7 +1,7 @@
 package log
 
 import (
-	"hlds-games/pkg/common"
+	"hlds-games/internal/common"
 	"regexp"
 	"time"
 )

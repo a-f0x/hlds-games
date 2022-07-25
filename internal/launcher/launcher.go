@@ -1,10 +1,10 @@
-package game
+package launcher
 
 import (
+	"hlds-games/internal/common"
 	logReceiver "hlds-games/internal/log"
-	"hlds-games/pkg/common"
-	"hlds-games/pkg/messages"
-	"hlds-games/pkg/rcon"
+	"hlds-games/internal/messages"
+	"hlds-games/internal/rcon"
 	"log"
 	"time"
 )

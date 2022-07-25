@@ -1,11 +1,11 @@
-package game
+package launcher
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"hlds-games/pkg/messages"
+	"hlds-games/internal/messages"
 	"log"
 	"sync"
 	"time"

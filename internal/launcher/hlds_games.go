@@ -1,4 +1,4 @@
-package game
+package launcher
 
 import (
 	"errors"

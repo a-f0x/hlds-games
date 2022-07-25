@@ -1,8 +1,8 @@
 package main
 
 import (
-	"hlds-games/internal/game"
-	"hlds-games/pkg/messages"
+	"hlds-games/internal/launcher"
+	"hlds-games/internal/messages"
 	"log"
 	"os"
 	"strconv"
@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf("Invalid game PORT %s", err.Error())
 	}
 
-	ga := game.NewLauncher(
+	ga := launcher.NewLauncher(
 		hldsServerPort,
 		*getEnv("MAP"),
 		*getEnv("GAME_TYPE"),
@@ -37,7 +37,7 @@ func main() {
 		make(chan *messages.Message[messages.ActionMessagePayload]),
 	)
 
-	amqpClient := game.NewAmqGameClient(
+	amqpClient := launcher.NewAmqGameClient(
 		*getEnv("RABBITMQ_HOST"),
 		amqpPort, *getEnv("RABBITMQ_USER"),
 		*getEnv("RABBITMQ_PASSWORD"),
