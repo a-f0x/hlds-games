@@ -1,65 +1,55 @@
 package main
 
 import (
+	"hlds-games/internal/common"
 	"hlds-games/internal/launcher"
 	"hlds-games/internal/messages"
 	"log"
-	"os"
 	"strconv"
 )
 
 func main() {
-	getEnv := func(key string) *string {
-		_, ok := os.LookupEnv(key)
-		if !ok {
-			log.Fatalf("Env %s not set\n", key)
-		} else {
-			value := os.Getenv(key)
-			return &value
-		}
-		return nil
-	}
-	amqpPort, err := strconv.ParseInt(*getEnv("RABBITMQ_PORT"), 10, 64)
-	if err != nil {
-		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
-	}
-	hldsServerPort, err := strconv.ParseInt(*getEnv("PORT"), 10, 64)
+	hldsServerPort, err := strconv.ParseInt(*common.GetEnv("PORT"), 10, 64)
 	if err != nil {
 		log.Fatalf("Invalid game PORT %s", err.Error())
 	}
-
 	ga := launcher.NewLauncher(
 		hldsServerPort,
-		*getEnv("MAP"),
-		*getEnv("GAME_TYPE"),
-		*getEnv("RCON_PASSWORD"),
+		*common.GetEnv("MAP"),
+		*common.GetEnv("GAME_TYPE"),
+		*common.GetEnv("RCON_PASSWORD"),
 		make(chan *messages.Message[messages.HeartBeatMessagePayload]),
 		make(chan *messages.Message[messages.ActionMessagePayload]),
 	)
-
-	amqpClient := launcher.NewAmqGameClient(
-		*getEnv("RABBITMQ_HOST"),
-		amqpPort, *getEnv("RABBITMQ_USER"),
-		*getEnv("RABBITMQ_PASSWORD"),
-	)
-
-	err = amqpClient.Connect()
-	if err != nil {
-		log.Fatalf("error connect to ampq %s", err)
-	}
+	var gameEventSender launcher.GameEventSender
+	gameEventSender = getGameEventSender()
 	ga.RunGame()
 	for {
 		select {
 		case heartBeat := <-ga.HeartBeat:
-			err := amqpClient.SendHeartBeat(*heartBeat)
+			err := gameEventSender.SendHeartBeat(*heartBeat)
 			if err != nil {
 				log.Printf("Error send heart beat notification. %s", err)
 			}
 		case action := <-ga.Action:
-			err := amqpClient.SendGameEvent(*action)
+			err := gameEventSender.SendGameEvent(*action)
 			if err != nil {
 				log.Printf("Error send action notification. %s", err)
 			}
 		}
 	}
+
+}
+func getGameEventSender() launcher.GameEventSender {
+	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
+	}
+	return launcher.NewAmqpGameEventSender(
+		common.NewAmqpClient(
+			*common.GetEnv("RABBITMQ_HOST"),
+			amqpPort, *common.GetEnv("RABBITMQ_USER"),
+			*common.GetEnv("RABBITMQ_PASSWORD"),
+		),
+	)
 }
