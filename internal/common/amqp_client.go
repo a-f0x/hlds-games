@@ -51,6 +51,44 @@ func (ac *AmqpClient) connect() {
 		}
 	}()
 }
+func (ac *AmqpClient) MarshalAndSend(message any, queue string, expirationMs string) error {
+	bytes, _ := json.Marshal(message)
+	return ac.send(bytes, queue, expirationMs)
+}
+
+/* вот тут короче вообще дофига вопросов как сделать правильно.
+Как отписываться ?
+Как правильно делать если хотят подписаться из нескольких горутин ? Видимо придется хранить мапу слайсов каналов.
+*/
+func (ac *AmqpClient) Subscribe(queue string) (<-chan []byte, error) {
+	stream := ac.streams[queue]
+	if stream != nil {
+		return nil, errors.New(fmt.Sprintf("already subscribed to queue %s", queue))
+	}
+	s := make(chan []byte)
+	ac.streams[queue] = &s
+	return s, nil
+}
+
+func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) error {
+	if ac.isConnected() {
+		err := ac.gameEventAmqpChannel.Publish(
+			gameEventsExchange,
+			queue,
+			false,
+			false,
+			amqp.Publishing{
+				Expiration:  expirationMs,
+				ContentType: contentType,
+				Body:        message,
+			})
+		if err != nil {
+			_ = ac.gameEventAmqpChannel.Close()
+		}
+		return nil
+	}
+	return errors.New("connection not established")
+}
 
 func (ac *AmqpClient) handleConnection(isConnectedChan chan bool) error {
 	for {
@@ -65,6 +103,16 @@ func (ac *AmqpClient) handleConnection(isConnectedChan chan bool) error {
 	}
 }
 
+/*
+Работать не будет если это фанаут эксчейнж и нету роутинг кея.
+
+----эмоции он----
+В общем я порядком удивлен, что это все надо делать ручками и нет реконнектов в библиотеке работы с реббитом,
+есть ишью https://github.com/rabbitmq/amqp091-go/issues/40
+Вообще очень удивлен. Вместо того что бы думать о том как написать бизнес логику надо ебстись что бы написать самому
+реконнекты, которые нужны практически во всех кейсах и любому разработчику. Почему нет этого нет в стандартной либе - загадка.
+----эмоции офф----
+*/
 func (ac *AmqpClient) consume(isConnectedChan chan bool) {
 	for {
 		isConnected := <-isConnectedChan
@@ -185,40 +233,6 @@ func createChannel(connection *amqp.Connection) (*amqp.Channel, error) {
 	return ch, nil
 }
 
-func (ac *AmqpClient) MarshalAndSend(message any, queue string, expirationMs string) error {
-	bytes, _ := json.Marshal(message)
-	return ac.send(bytes, queue, expirationMs)
-}
-
-func (ac *AmqpClient) Stream(queue string) <-chan []byte {
-	stream := ac.streams[queue]
-	if stream != nil {
-		return *stream
-	}
-	s := make(chan []byte)
-	ac.streams[queue] = &s
-	return s
-}
-
-func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) error {
-	if ac.isConnected() {
-		err := ac.gameEventAmqpChannel.Publish(
-			gameEventsExchange,
-			queue,
-			false,
-			false,
-			amqp.Publishing{
-				Expiration:  expirationMs,
-				ContentType: contentType,
-				Body:        message,
-			})
-		if err != nil {
-			_ = ac.gameEventAmqpChannel.Close()
-		}
-		return nil
-	}
-	return errors.New("connection not established")
-}
 func (ac *AmqpClient) isConnected() bool {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()

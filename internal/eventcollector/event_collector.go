@@ -32,8 +32,14 @@ func (ec *EventCollector) collect(
 	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload],
 	actionChannel chan messages.Message[messages.ActionMessagePayload],
 ) {
-	heartBeatBytesChannel := ec.amqpClient.Stream(common.HeartBeatQueue)
-	actionBeatBytesChannel := ec.amqpClient.Stream(common.GameEventsQueue)
+	heartBeatBytesChannel, err := ec.amqpClient.Subscribe(common.HeartBeatQueue)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	actionBeatBytesChannel, err2 := ec.amqpClient.Subscribe(common.GameEventsQueue)
+	if err2 != nil {
+		log.Fatalf(err2.Error())
+	}
 	go func() {
 		for {
 			select {
