@@ -19,14 +19,15 @@ const (
 )
 
 type AmqpClient struct {
-	host                 string
-	port                 int64
-	user                 string
-	password             string
-	gameEventAmqpChannel *amqp.Channel
-	connection           *amqp.Connection
-	mu                   sync.Mutex
-	streams              map[string]*chan []byte
+	host             string
+	port             int64
+	user             string
+	password         string
+	outAmqpChannel   *amqp.Channel
+	inputAmqpChannel *amqp.Channel
+	connection       *amqp.Connection
+	mu               sync.Mutex
+	streams          map[string]*chan []byte
 }
 
 func NewAmqpClient(host string, port int64, user string, password string) *AmqpClient {
@@ -72,7 +73,7 @@ func (ac *AmqpClient) Subscribe(queue string) (<-chan []byte, error) {
 
 func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) error {
 	if ac.isConnected() {
-		err := ac.gameEventAmqpChannel.Publish(
+		err := ac.outAmqpChannel.Publish(
 			gameEventsExchange,
 			queue,
 			false,
@@ -83,14 +84,14 @@ func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) er
 				Body:        message,
 			})
 		if err != nil {
-			_ = ac.gameEventAmqpChannel.Close()
+			_ = ac.outAmqpChannel.Close()
 		}
 		return nil
 	}
 	return errors.New("connection not established")
 }
 
-func (ac *AmqpClient) handleConnection(isConnectedChan chan bool) error {
+func (ac *AmqpClient) handleConnection(isConnectedChan chan<- bool) error {
 	for {
 		time.Sleep(time.Duration(reconnectSec) * time.Second)
 		if ac.isConnected() {
@@ -113,12 +114,12 @@ func (ac *AmqpClient) handleConnection(isConnectedChan chan bool) error {
 реконнекты, которые нужны практически во всех кейсах и любому разработчику. Почему нет этого нет в стандартной либе - загадка.
 ----эмоции офф----
 */
-func (ac *AmqpClient) consume(isConnectedChan chan bool) {
+func (ac *AmqpClient) consume(isConnectedChan <-chan bool) {
 	for {
 		isConnected := <-isConnectedChan
 		if isConnected {
 			for queue, stream := range ac.streams {
-				messages, err := ac.gameEventAmqpChannel.Consume(
+				messages, err := ac.inputAmqpChannel.Consume(
 					queue,
 					"",
 					true,
@@ -141,7 +142,7 @@ func (ac *AmqpClient) consume(isConnectedChan chan bool) {
 	}
 }
 
-func (ac *AmqpClient) initConnection(isConnectedChan chan bool) error {
+func (ac *AmqpClient) initConnection(isConnectedChan chan<- bool) error {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/", ac.user, ac.password, ac.host, ac.port)
@@ -153,15 +154,23 @@ func (ac *AmqpClient) initConnection(isConnectedChan chan bool) error {
 		return nil
 	}
 
-	ch, channelError := createChannel(conn)
-	if channelError != nil {
+	outChannel, outChannelError := createChannel(conn)
+	if outChannelError != nil {
 		isConnectedChan <- false
 		conn.Close()
-		return channelError
+		return outChannelError
+	}
+	ac.outAmqpChannel = outChannel
+	inputChannel, inputChannelError := createChannel(conn)
+	if inputChannelError != nil {
+		isConnectedChan <- false
+		conn.Close()
+		return inputChannelError
 	}
 
+	ac.inputAmqpChannel = inputChannel
 	ac.connection = conn
-	ac.gameEventAmqpChannel = ch
+
 	isConnectedChan <- true
 	log.Printf("Connection success amqp: %s:%d\n", ac.host, ac.port)
 	return nil
@@ -240,5 +249,4 @@ func (ac *AmqpClient) isConnected() bool {
 		return false
 	}
 	return !ac.connection.IsClosed()
-
 }
