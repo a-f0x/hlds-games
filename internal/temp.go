@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"hlds-games/internal/common"
+	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
 	"log"
@@ -17,17 +18,52 @@ func main() {
 
 func testRabbit() {
 	common.FakeEnvRabbit("127.0.0.1")
+	consume()
+	produce()
+
+}
+func produce() {
+	type message struct {
+		Num  int       `json:"num"`
+		Time time.Time `json:"time"`
+	}
 	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
 	if err != nil {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
 	}
-	client := common.NewAmqpClient(
+	producer := rabbit.NewAmqpProducer(
 		*common.GetEnv("RABBITMQ_HOST"),
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),
 		1,
 	)
-	subscribe, err := client.Subscribe(common.GameEventsQueue)
+
+	for i := 1; i <= 100; i++ {
+		time.Sleep(time.Duration(2) * time.Second)
+		m := message{
+			Num:  i,
+			Time: time.Now(),
+		}
+		err := producer.MarshallAndSend(m, common.GameEventsQueue, "60000")
+		if err != nil {
+			log.Printf("error when send %v, %s", m, err)
+		}
+	}
+}
+
+func consume() {
+	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
+	}
+	consumer := rabbit.NewAmqpConsumer(
+		*common.GetEnv("RABBITMQ_HOST"),
+		amqpPort, *common.GetEnv("RABBITMQ_USER"),
+		*common.GetEnv("RABBITMQ_PASSWORD"),
+		1,
+	)
+	time.Sleep(time.Duration(5) * time.Second)
+	subscribe, err := consumer.Subscribe(common.GameEventsQueue)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -37,24 +73,9 @@ func testRabbit() {
 			log.Printf("incoming <-%s", string(bytes))
 		}
 	}()
-	type message struct {
-		Num  int       `json:"num"`
-		Time time.Time `json:"time"`
-	}
-
-	for i := 1; i <= 100; i++ {
-		time.Sleep(time.Duration(2) * time.Second)
-		m := message{
-			Num:  i,
-			Time: time.Now(),
-		}
-		err := client.MarshalAndSend(m, common.GameEventsQueue, "60000")
-		if err != nil {
-			log.Printf("error when send %v", m)
-		}
-	}
 
 }
+
 func readStats() {
 	path := "./data/csstats.dat"
 	file, err := os.Open(path)
