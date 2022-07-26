@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	common.FakeEnv()
+	common.FakeEnvRabbit("192.168.88.44")
 	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
 	if err != nil {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())

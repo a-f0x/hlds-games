@@ -23,8 +23,8 @@ func GetEnv(key string) *string {
 	return nil
 }
 
-func FakeEnv() {
-	os.Setenv("RABBITMQ_HOST", "127.0.0.1")
+func FakeEnvRabbit(host string) {
+	os.Setenv("RABBITMQ_HOST", host)
 	os.Setenv("RABBITMQ_PORT", "5672")
 	os.Setenv("RABBITMQ_USER", "guestUsr")
 	os.Setenv("RABBITMQ_PASSWORD", "guestPwd")

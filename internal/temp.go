@@ -16,7 +16,7 @@ func main() {
 }
 
 func testRabbit() {
-	common.FakeEnv()
+	common.FakeEnvRabbit("127.0.0.1")
 	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
 	if err != nil {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
