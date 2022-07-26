@@ -42,10 +42,9 @@ func (ac *AmqpConsumer) streaming() {
 }
 
 func (ac *AmqpConsumer) connectStream(stream *stream) {
-	amqpChannel := ac.client.channel
-
-	if amqpChannel == nil {
+	if !ac.client.isConnected() {
 		return
+
 	}
 	messages, err := ac.client.channel.Consume(
 		stream.queue,
