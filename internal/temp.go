@@ -18,14 +18,15 @@ func main() {
 
 func testRabbit() {
 	common.FakeEnvRabbit("127.0.0.1")
-	consume()
+	go consume()
 	produce()
 
 }
 func produce() {
 	type message struct {
-		Num  int       `json:"num"`
-		Time time.Time `json:"time"`
+		Num   int       `json:"num"`
+		Queue string    `json:"queue"`
+		Time  time.Time `json:"time"`
 	}
 	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
 	if err != nil {
@@ -40,14 +41,18 @@ func produce() {
 
 	for i := 1; i <= 100; i++ {
 		time.Sleep(time.Duration(2) * time.Second)
-		m := message{
-			Num:  i,
-			Time: time.Now(),
-		}
-		err := producer.MarshallAndSend(m, common.GameEventsQueue, "60000")
-		if err != nil {
-			//log.Printf("error when send %v, %s", m, err)
-		}
+		producer.MarshallAndSend(message{
+			Num:   i,
+			Queue: "GameEventsQueue",
+			Time:  time.Now(),
+		}, common.GameEventsQueue, "60000")
+
+		producer.MarshallAndSend(message{
+			Num:   i,
+			Queue: "HeartBeatQueue",
+			Time:  time.Now(),
+		}, common.HeartBeatQueue, "60000")
+
 	}
 }
 
@@ -63,13 +68,27 @@ func consume() {
 		1,
 	)
 	time.Sleep(time.Duration(5) * time.Second)
-	subscribe, err := consumer.Subscribe(common.GameEventsQueue)
+	subscribeGameEventsQueue, err := consumer.Subscribe(common.GameEventsQueue)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
 	go func() {
 		for {
-			bytes := <-subscribe
+			bytes := <-subscribeGameEventsQueue
+			log.Printf("incoming <-%s", string(bytes))
+		}
+	}()
+
+	time.Sleep(time.Duration(5) * time.Second)
+	subscribeHeartBeatQueue, err2 := consumer.Subscribe(common.HeartBeatQueue)
+	if err2 != nil {
+		log.Fatalf(err2.Error())
+	}
+
+	go func() {
+		for {
+			bytes := <-subscribeHeartBeatQueue
 			log.Printf("incoming <-%s", string(bytes))
 		}
 	}()

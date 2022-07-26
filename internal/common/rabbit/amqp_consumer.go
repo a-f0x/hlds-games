@@ -27,49 +27,35 @@ func NewAmqpConsumer(host string, port int64, user string, password string, reco
 }
 
 func (ac *AmqpConsumer) reconnect() {
-	for queue, stream := range ac.streams {
-
-		messages, err := ac.client.channel.Consume(
-			queue,
-			"",
-			true,
-			false,
-			false,
-			false,
-			nil,
-		)
-		if err != nil {
-			log.Fatalf("Queue %s consumer error %s", queue, err)
-		}
-		stream.incomingChannel = messages
-		stream.consume()
+	for _, stream := range ac.streams {
+		ac.connectStream(stream)
 	}
 }
-
-//func (ac * )  {
-//
-//}
 
 func (ac *AmqpConsumer) streaming() {
 	for queue, stream := range ac.streams {
 		if stream.incomingChannel == nil {
 			log.Printf("create new stream %s", queue)
-			messages, err := ac.client.channel.Consume(
-				queue,
-				"",
-				true,
-				false,
-				false,
-				false,
-				nil,
-			)
-			if err != nil {
-				log.Fatalf("Queue %s consumer error %s", queue, err)
-			}
-			stream.incomingChannel = messages
-			stream.consume()
+			ac.connectStream(stream)
 		}
 	}
+}
+
+func (ac *AmqpConsumer) connectStream(stream *stream) {
+	messages, err := ac.client.channel.Consume(
+		stream.queue,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatalf("Queue %s consumer error %s", stream.queue, err)
+	}
+	stream.incomingChannel = messages
+	stream.consume()
 }
 
 //как тут сделать отписку и отмену ? как то видимо с контекстом работать надо. я еще пока до него не добрался.
