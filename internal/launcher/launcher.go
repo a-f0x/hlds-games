@@ -15,15 +15,15 @@ const (
 )
 
 type Launcher struct {
-	hldsServerPort int64
-	gMap           string
-	gameType       string
-	rconPassword   string
-	rcon           *rcon.Rcon
-	logReceiver    *logReceiver.Receiver
-	HeartBeat      chan *messages.Message[messages.HeartBeatMessagePayload]
-	Action         chan *messages.Message[messages.ActionMessagePayload]
-	isConnected    *common.AtomicBool
+	hldsServerPort   int64
+	gMap             string
+	gameType         string
+	rconPassword     string
+	rcon             *rcon.Rcon
+	logReceiver      *logReceiver.Receiver
+	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload]
+	actionChannel    chan messages.Message[messages.ActionMessagePayload]
+	isConnected      *common.AtomicBool
 }
 
 func NewLauncher(
@@ -31,19 +31,17 @@ func NewLauncher(
 	gMap string,
 	gameType string,
 	rconPassword string,
-	heartBeat chan *messages.Message[messages.HeartBeatMessagePayload],
-	action chan *messages.Message[messages.ActionMessagePayload],
 ) *Launcher {
 	return &Launcher{
-		hldsServerPort: hldsServerPort,
-		gMap:           gMap,
-		gameType:       gameType,
-		rconPassword:   rconPassword,
-		logReceiver:    logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
-		rcon:           rcon.NewRcon(hldsServerHost, hldsServerPort, rconPassword),
-		HeartBeat:      heartBeat,
-		Action:         action,
-		isConnected:    new(common.AtomicBool),
+		hldsServerPort:   hldsServerPort,
+		gMap:             gMap,
+		gameType:         gameType,
+		rconPassword:     rconPassword,
+		logReceiver:      logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
+		rcon:             rcon.NewRcon(hldsServerHost, hldsServerPort, rconPassword),
+		heartBeatChannel: make(chan messages.Message[messages.HeartBeatMessagePayload]),
+		actionChannel:    make(chan messages.Message[messages.ActionMessagePayload]),
+		isConnected:      new(common.AtomicBool),
 	}
 }
 
@@ -52,7 +50,10 @@ func NewLauncher(
 //	Запустить игру
 //	Дождаться когда сервер будет готов к игре с помощью функции heartBeat
 // После этого поднять logReceiver
-func (a *Launcher) RunGame() {
+func (a *Launcher) RunGame() (
+	<-chan messages.Message[messages.HeartBeatMessagePayload],
+	<-chan messages.Message[messages.ActionMessagePayload],
+) {
 	a.startGame()
 	isOnline := make(chan messages.ServerInfo)
 	go func() {
@@ -60,6 +61,7 @@ func (a *Launcher) RunGame() {
 		a.startLog(serverInfo)
 	}()
 	a.heartBeat(2, isOnline)
+	return a.heartBeatChannel, a.actionChannel
 }
 
 func (a *Launcher) startGame() {
@@ -74,13 +76,13 @@ func (a *Launcher) startLog(info messages.ServerInfo) {
 		log.Println("Listen to log events")
 		for {
 			logEvent := <-a.logReceiver.LogEvent
-			message := &messages.Message[messages.ActionMessagePayload]{
+			message := messages.Message[messages.ActionMessagePayload]{
 				ServerInfo:  info,
 				Time:        logEvent.Time,
 				MessageType: messages.Action,
 				Payload:     newActionMessagePayload(logEvent),
 			}
-			a.Action <- message
+			a.actionChannel <- message
 		}
 	}
 	go listenLogEvents(info)
@@ -114,7 +116,7 @@ func (a *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 					Name: serverStatus.Name,
 					Host: serverStatus.Host,
 				}
-				a.HeartBeat <- &messages.Message[messages.HeartBeatMessagePayload]{
+				a.heartBeatChannel <- messages.Message[messages.HeartBeatMessagePayload]{
 					ServerInfo:  serverInfo,
 					Time:        time.Now().Unix(),
 					MessageType: messages.HeartBeat,

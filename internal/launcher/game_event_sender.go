@@ -5,12 +5,6 @@ import (
 	"hlds-games/internal/messages"
 )
 
-type GameEventSender interface {
-	SendHeartBeat(message messages.Message[messages.HeartBeatMessagePayload]) error
-
-	SendGameEvent(message messages.Message[messages.ActionMessagePayload]) error
-}
-
 const (
 	actionExpirationTimeMs    = "15000" //15 sec
 	heartBeatExpirationTimeMs = "2000"  //2 sec
