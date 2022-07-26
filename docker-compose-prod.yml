@@ -4,10 +4,6 @@ services:
   mariadb:
     restart: always
     image: mariadb:10.7.4
-    ports:
-      - "3306:3306"
-    expose:
-      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: S3cret
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -15,18 +11,14 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - ./mariadb:/var/lib/mysql
+    network_mode: host
   rabbitmq:
     restart: always
     image: rabbitmq:3.9.21-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-    expose:
-      - "5672"
-      - "15672"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
+    network_mode: host
     deploy:
       resources:
         limits:
@@ -35,10 +27,9 @@ services:
   fast-download:
     restart: always
     image: af0x/rehlds-fastdl
-    ports:
-      - "2750:80"
     volumes:
-      - ./resources
+      - ./resources:/static
+    network_mode: host
   cs:
     restart: always
     profiles:
@@ -59,9 +50,9 @@ services:
     volumes:
       - ./docker/cs/maps.ini:/hlds/cstrike/addons/amxmodx/configs/maps.ini
       - ./docker/cs/server.cfg:/hlds/cstrike/server.cfg
-      #      - ./docker/cs/maps:/hlds/cstrike/maps
+      - ./docker/cs/maps:/hlds/cstrike/maps
       - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
-    #      - ./out/game_agent:/hlds/game_agent
+    network_mode: host
     deploy:
       resources:
         limits:
@@ -93,19 +84,14 @@ services:
     volumes:
       - ./docker/csdm/maps.ini:/hlds/cstrike/addons/amxmodx/configs/maps.ini
       - ./docker/csdm/server.cfg:/hlds/cstrike/server.cfg
-      #      - ./docker/csdm/maps:/hlds/cstrike/maps
+      - ./docker/csdm/maps:/hlds/cstrike/maps
       - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
+    network_mode: host
     deploy:
       resources:
         limits:
           cpus: '2.5'
           memory: 512M
-    expose:
-      - "27017/tcp"
-      - "27017/udp"
-    ports:
-      - "27017:27017/tcp"
-      - "27017:27017/udp"
   half-life:
     restart: always
     profiles:
@@ -127,20 +113,11 @@ services:
     volumes:
       - ./docker/half-life/maps.ini:/hlds/valve/addons/amxmodx/configs/maps.ini
       - ./docker/half-life/server.cfg:/hlds/valve/server.cfg
-      #      - ./docker/half-life/maps:/hlds/valve/maps
+      - ./docker/half-life/maps:/hlds/valve/maps
       - ./docker/users.ini:/hlds/valve/addons/amxmodx/configs/users.ini
+    network_mode: host
     deploy:
       resources:
         limits:
           cpus: '2.5'
           memory: 512M
-    expose:
-      - "27016/tcp"
-      - "27016/udp"
-    ports:
-      - "27016:27016/tcp"
-      - "27016:27016/udp"
-networks:
-  default:
-    external: true
-    name: hlds-net
