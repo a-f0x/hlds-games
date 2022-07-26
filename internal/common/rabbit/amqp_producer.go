@@ -5,7 +5,6 @@ import (
 	"errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"hlds-games/internal/common"
-	"log"
 )
 
 type AmqpProducer struct {
@@ -24,7 +23,7 @@ func NewAmqpProducer(host string, port int64, user string, password string, reco
 }
 func (ap *AmqpProducer) watch(connectionInfo <-chan bool) {
 	for isConnectedState := range connectionInfo {
-		log.Printf("producer state %v", isConnectedState)
+		//log.Printf("producer state %v", isConnectedState)
 		ap.isConnected.Set(isConnectedState)
 	}
 }

@@ -46,7 +46,7 @@ func produce() {
 		}
 		err := producer.MarshallAndSend(m, common.GameEventsQueue, "60000")
 		if err != nil {
-			log.Printf("error when send %v, %s", m, err)
+			//log.Printf("error when send %v, %s", m, err)
 		}
 	}
 }
