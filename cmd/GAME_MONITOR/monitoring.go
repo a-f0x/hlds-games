@@ -19,6 +19,7 @@ func main() {
 		*common.GetEnv("RABBITMQ_HOST"),
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),
+		2,
 	)
 
 	ec := eventcollector.NewEventCollector(

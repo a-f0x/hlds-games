@@ -15,7 +15,6 @@ const (
 	HeartBeatQueue     = "heart-beat"
 	GameEventsQueue    = "game-action"
 	contentType        = "application/json"
-	reconnectSec       = 2
 )
 
 type AmqpClient struct {
@@ -23,6 +22,7 @@ type AmqpClient struct {
 	port             int64
 	user             string
 	password         string
+	reconnectSec     int32
 	outAmqpChannel   *amqp.Channel
 	inputAmqpChannel *amqp.Channel
 	connection       *amqp.Connection
@@ -30,14 +30,14 @@ type AmqpClient struct {
 	streams          map[string]*chan []byte
 }
 
-func NewAmqpClient(host string, port int64, user string, password string) *AmqpClient {
+func NewAmqpClient(host string, port int64, user string, password string, reconnectionTimeSec int32) *AmqpClient {
 	client := &AmqpClient{
-		host:     host,
-		port:     port,
-		user:     user,
-		password: password,
-
-		streams: make(map[string]*chan []byte),
+		host:         host,
+		port:         port,
+		user:         user,
+		password:     password,
+		reconnectSec: reconnectionTimeSec,
+		streams:      make(map[string]*chan []byte),
 	}
 	client.connect()
 	return client
@@ -93,7 +93,7 @@ func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) er
 
 func (ac *AmqpClient) handleConnection(isConnectedChan chan<- bool) error {
 	for {
-		time.Sleep(time.Duration(reconnectSec) * time.Second)
+		time.Sleep(time.Duration(ac.reconnectSec) * time.Second)
 		if ac.isConnected() {
 			continue
 		}
@@ -149,7 +149,7 @@ func (ac *AmqpClient) initConnection(isConnectedChan chan<- bool) error {
 	log.Printf("Trying to connect amqp: %s:%d\n", ac.host, ac.port)
 	conn, openConnectionError := amqp.Dial(url)
 	if openConnectionError != nil {
-		log.Printf("Error to connect amqp: %s:%d\n%s\nTry reconnect after %d sec.\n", ac.host, ac.port, openConnectionError, reconnectSec)
+		log.Printf("Error to connect amqp: %s:%d\n%s\nTry reconnect after %d sec.\n", ac.host, ac.port, openConnectionError, ac.reconnectSec)
 		isConnectedChan <- false
 		return nil
 	}

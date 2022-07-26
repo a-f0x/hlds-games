@@ -25,6 +25,7 @@ func testRabbit() {
 		*common.GetEnv("RABBITMQ_HOST"),
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),
+		1,
 	)
 	subscribe, err := client.Subscribe(common.GameEventsQueue)
 	if err != nil {
