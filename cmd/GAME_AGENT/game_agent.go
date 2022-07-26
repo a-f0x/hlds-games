@@ -46,6 +46,5 @@ func getGameEventSender() *launcher.AmqpGameEventSender {
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),
 	)
-	client.Connect()
 	return launcher.NewAmqpGameEventSender(client)
 }

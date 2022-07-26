@@ -25,17 +25,7 @@ func (ec *EventCollector) Collect() (
 ) {
 	heartBeatChannel := make(chan messages.Message[messages.HeartBeatMessagePayload])
 	actionChannel := make(chan messages.Message[messages.ActionMessagePayload])
-	ch := ec.amqpClient.Connect()
-	go func() {
-		for {
-			isConnected := <-ch
-			log.Printf("EventCollector: is connected %v", isConnected)
-			if isConnected {
-				ec.collect(heartBeatChannel, actionChannel)
-				continue
-			}
-		}
-	}()
+	ec.collect(heartBeatChannel, actionChannel)
 	return heartBeatChannel, actionChannel
 }
 func (ec *EventCollector) collect(

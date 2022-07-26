@@ -11,14 +11,11 @@ import (
 )
 
 const (
-	gameEventsExchange        = "hlds-games"
-	HeartBeatQueue            = "heart-beat"
-	GameEventsQueue           = "game-action"
-	contentType               = "application/json"
-	reconnectSec              = 2
-	stateDisconnected  uint32 = 0
-	stateConnected     uint32 = 1
-	stateConnecting    uint32 = 2
+	gameEventsExchange = "hlds-games"
+	HeartBeatQueue     = "heart-beat"
+	GameEventsQueue    = "game-action"
+	contentType        = "application/json"
+	reconnectSec       = 2
 )
 
 type AmqpClient struct {
@@ -28,9 +25,8 @@ type AmqpClient struct {
 	password             string
 	gameEventAmqpChannel *amqp.Channel
 	connection           *amqp.Connection
-	//state                uint32
-	mu              sync.Mutex
-	isConnectedChan chan bool
+	mu                   sync.Mutex
+	streams              map[string]*chan []byte
 }
 
 func NewAmqpClient(host string, port int64, user string, password string) *AmqpClient {
@@ -39,35 +35,65 @@ func NewAmqpClient(host string, port int64, user string, password string) *AmqpC
 		port:     port,
 		user:     user,
 		password: password,
-		//state:           stateDisconnected,
-		isConnectedChan: make(chan bool),
+
+		streams: make(map[string]*chan []byte),
 	}
+	client.connect()
 	return client
 }
-func (ac *AmqpClient) Connect() <-chan bool {
+func (ac *AmqpClient) connect() {
+	isConnectedChan := make(chan bool)
+	go ac.consume(isConnectedChan)
 	go func() {
-		err := ac.handleConnection()
+		err := ac.handleConnection(isConnectedChan)
 		if err != nil {
 			log.Fatalf("Error connect to amqp: %s\n", err.Error())
 		}
 	}()
-	return ac.isConnectedChan
 }
 
-func (ac *AmqpClient) handleConnection() error {
+func (ac *AmqpClient) handleConnection(isConnectedChan chan bool) error {
 	for {
 		time.Sleep(time.Duration(reconnectSec) * time.Second)
 		if ac.isConnected() {
 			continue
 		}
-		err := ac.initConnection()
+		err := ac.initConnection(isConnectedChan)
 		if err != nil {
 			return err
 		}
 	}
 }
 
-func (ac *AmqpClient) initConnection() error {
+func (ac *AmqpClient) consume(isConnectedChan chan bool) {
+	for {
+		isConnected := <-isConnectedChan
+		if isConnected {
+			for queue, stream := range ac.streams {
+				messages, err := ac.gameEventAmqpChannel.Consume(
+					queue,
+					"",
+					true,
+					false,
+					false,
+					false,
+					nil,
+				)
+				if err != nil {
+					log.Fatalf("Queue %s consumer error %s", queue, err)
+				}
+				stream := stream
+				go func() {
+					for delivery := range messages {
+						*stream <- delivery.Body
+					}
+				}()
+			}
+		}
+	}
+}
+
+func (ac *AmqpClient) initConnection(isConnectedChan chan bool) error {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/", ac.user, ac.password, ac.host, ac.port)
@@ -75,21 +101,20 @@ func (ac *AmqpClient) initConnection() error {
 	conn, openConnectionError := amqp.Dial(url)
 	if openConnectionError != nil {
 		log.Printf("Error to connect amqp: %s:%d\n%s\nTry reconnect after %d sec.\n", ac.host, ac.port, openConnectionError, reconnectSec)
-		ac.isConnectedChan <- false
+		isConnectedChan <- false
 		return nil
 	}
 
 	ch, channelError := createChannel(conn)
 	if channelError != nil {
-		ac.isConnectedChan <- false
+		isConnectedChan <- false
 		conn.Close()
 		return channelError
 	}
 
 	ac.connection = conn
 	ac.gameEventAmqpChannel = ch
-	ac.isConnectedChan <- true
-	//ac.setConnectionStateConnected()
+	isConnectedChan <- true
 	log.Printf("Connection success amqp: %s:%d\n", ac.host, ac.port)
 	return nil
 }
@@ -166,26 +191,13 @@ func (ac *AmqpClient) MarshalAndSend(message any, queue string, expirationMs str
 }
 
 func (ac *AmqpClient) Stream(queue string) <-chan []byte {
-	messages, err := ac.gameEventAmqpChannel.Consume(
-		queue,
-		"",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatalf("Queue %s consumer error %s", queue, err)
+	stream := ac.streams[queue]
+	if stream != nil {
+		return *stream
 	}
-	resultChan := make(chan []byte)
-	go func() {
-		for delivery := range messages {
-			resultChan <- delivery.Body
-		}
-	}()
-
-	return resultChan
+	s := make(chan []byte)
+	ac.streams[queue] = &s
+	return s
 }
 
 func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) error {
@@ -202,41 +214,11 @@ func (ac *AmqpClient) send(message []byte, queue string, expirationMs string) er
 			})
 		if err != nil {
 			_ = ac.gameEventAmqpChannel.Close()
-			//ac.setConnectionStateDisconnected()
 		}
 		return nil
 	}
 	return errors.New("connection not established")
 }
-
-//func (ac *AmqpClient) setConnectionStateConnected() {
-//	ac.mu.Lock()
-//	ac.state = stateConnected
-//	ac.isConnectedChan <- true
-//	ac.mu.Unlock()
-//}
-
-//func (ac *AmqpClient) setConnectionStateDisconnected() {
-//	ac.mu.Lock()
-//	if ac.connection != nil {
-//		ac.connection.Close()
-//	}
-//
-//	//ac.state = stateDisconnected
-//	ac.isConnectedChan <- false
-//	ac.mu.Unlock()
-//}
-
-//func (ac *AmqpClient) setConnectionStateConnecting() bool {
-//	ac.mu.Lock()
-//	defer ac.mu.Unlock()
-//	if ac.state == stateDisconnected {
-//		ac.state = stateConnecting
-//		return true
-//	}
-//	return false
-//}
-
 func (ac *AmqpClient) isConnected() bool {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
@@ -246,10 +228,3 @@ func (ac *AmqpClient) isConnected() bool {
 	return !ac.connection.IsClosed()
 
 }
-
-//func (ac *AmqpClient) getConnectionState() uint32 {
-//	ac.mu.Lock()
-//	s := ac.state
-//	ac.mu.Unlock()
-//	return s
-//}
