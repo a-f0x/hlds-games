@@ -33,19 +33,15 @@ func (ac *AmqpConsumer) reconnect() {
 }
 
 func (ac *AmqpConsumer) streaming() {
-	for queue, stream := range ac.streams {
+	for _, stream := range ac.streams {
 		if stream.incomingChannel == nil {
-			log.Printf("create new stream %s", queue)
 			ac.connectStream(stream)
 		}
 	}
 }
 
 func (ac *AmqpConsumer) connectStream(stream *stream) {
-	if !ac.client.isConnected() {
-		return
-
-	}
+	log.Printf("connect stream %s", stream.queue)
 	messages, err := ac.client.channel.Consume(
 		stream.queue,
 		"",
@@ -73,7 +69,7 @@ func (ac *AmqpConsumer) watch(connectionInfo <-chan bool) {
 			}
 		case startStreaming := <-ac.startChan:
 			//log.Printf("consumer streaming state %v", startStreaming)
-			if startStreaming {
+			if startStreaming && ac.client.isConnected() {
 				ac.streaming()
 			}
 		}
