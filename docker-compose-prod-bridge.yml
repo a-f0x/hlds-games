@@ -38,7 +38,7 @@ services:
     ports:
       - "2750:2750"
     volumes:
-      - ./resources
+      - ./resources:/static
   cs:
     restart: always
     profiles:
