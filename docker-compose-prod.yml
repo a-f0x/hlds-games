@@ -58,12 +58,6 @@ services:
         limits:
           cpus: '2.5'
           memory: 512M
-    expose:
-      - "27015/tcp"
-      - "27015/udp"
-    ports:
-      - "27015:27015/tcp"
-      - "27015:27015/udp"
   csdm:
     restart: always
     profiles:
