@@ -15,7 +15,7 @@ const (
 	contentType        = "application/json"
 )
 
-type AmqpClientV2 struct {
+type amqpClient struct {
 	host         string
 	port         int64
 	user         string
@@ -26,8 +26,8 @@ type AmqpClientV2 struct {
 	mu           sync.Mutex
 }
 
-func newAmqpClientV2(host string, port int64, user string, password string, reconnectionTimeSec int32) *AmqpClientV2 {
-	client := &AmqpClientV2{
+func newAmqpClient(host string, port int64, user string, password string, reconnectionTimeSec int32) *amqpClient {
+	client := &amqpClient{
 		host:         host,
 		port:         port,
 		user:         user,
@@ -37,7 +37,7 @@ func newAmqpClientV2(host string, port int64, user string, password string, reco
 	return client
 }
 
-func (ac *AmqpClientV2) connect() <-chan bool {
+func (ac *amqpClient) connect() <-chan bool {
 	isConnectedChan := make(chan bool)
 	go func() {
 		err := ac.handleConnection(isConnectedChan)
@@ -48,7 +48,7 @@ func (ac *AmqpClientV2) connect() <-chan bool {
 	return isConnectedChan
 }
 
-func (ac *AmqpClientV2) handleConnection(isConnectedChan chan<- bool) error {
+func (ac *amqpClient) handleConnection(isConnectedChan chan<- bool) error {
 	for {
 		time.Sleep(time.Duration(ac.reconnectSec) * time.Second)
 		if ac.isConnected() {
@@ -60,7 +60,7 @@ func (ac *AmqpClientV2) handleConnection(isConnectedChan chan<- bool) error {
 		}
 	}
 }
-func (ac *AmqpClientV2) initConnection(isConnectedChan chan<- bool) error {
+func (ac *amqpClient) initConnection(isConnectedChan chan<- bool) error {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/", ac.user, ac.password, ac.host, ac.port)
@@ -151,7 +151,7 @@ func createChannel(connection *amqp.Connection) (*amqp.Channel, error) {
 	return ch, nil
 }
 
-func (ac *AmqpClientV2) isConnected() bool {
+func (ac *amqpClient) isConnected() bool {
 	ac.mu.Lock()
 	defer ac.mu.Unlock()
 	if ac.connection == nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"hlds-games/internal/common"
+	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/eventcollector"
 	"log"
 	"strconv"
@@ -15,16 +16,14 @@ func main() {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
 	}
 
-	client := common.NewAmqpClient(
+	client := rabbit.NewAmqpConsumer(
 		*common.GetEnv("RABBITMQ_HOST"),
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),
 		2,
 	)
 
-	ec := eventcollector.NewEventCollector(
-		client,
-	)
+	ec := eventcollector.NewEventCollector(client)
 	heartBeatChannel, actionChannel := ec.Collect()
 	for {
 		select {

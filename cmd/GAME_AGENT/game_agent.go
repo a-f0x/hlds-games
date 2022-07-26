@@ -2,6 +2,7 @@ package main
 
 import (
 	"hlds-games/internal/common"
+	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/launcher"
 	"log"
 	"strconv"
@@ -41,7 +42,7 @@ func getGameEventSender() *launcher.AmqpGameEventSender {
 	if err != nil {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
 	}
-	client := common.NewAmqpClient(
+	client := rabbit.NewAmqpProducer(
 		*common.GetEnv("RABBITMQ_HOST"),
 		amqpPort, *common.GetEnv("RABBITMQ_USER"),
 		*common.GetEnv("RABBITMQ_PASSWORD"),

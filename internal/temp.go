@@ -45,13 +45,13 @@ func produce() {
 			Num:   i,
 			Queue: "GameEventsQueue",
 			Time:  time.Now(),
-		}, common.GameEventsQueue, "60000")
+		}, rabbit.GameEventsQueue, "60000")
 
 		producer.MarshallAndSend(message{
 			Num:   i,
 			Queue: "HeartBeatQueue",
 			Time:  time.Now(),
-		}, common.HeartBeatQueue, "60000")
+		}, rabbit.HeartBeatQueue, "60000")
 
 	}
 }
@@ -67,8 +67,8 @@ func consume() {
 		*common.GetEnv("RABBITMQ_PASSWORD"),
 		1,
 	)
-	time.Sleep(time.Duration(5) * time.Second)
-	subscribeGameEventsQueue, err := consumer.Subscribe(common.GameEventsQueue)
+	//time.Sleep(time.Duration(5) * time.Second)
+	subscribeGameEventsQueue, err := consumer.Subscribe(rabbit.GameEventsQueue)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -80,8 +80,8 @@ func consume() {
 		}
 	}()
 
-	time.Sleep(time.Duration(5) * time.Second)
-	subscribeHeartBeatQueue, err2 := consumer.Subscribe(common.HeartBeatQueue)
+	//time.Sleep(time.Duration(5) * time.Second)
+	subscribeHeartBeatQueue, err2 := consumer.Subscribe(rabbit.HeartBeatQueue)
 	if err2 != nil {
 		log.Fatalf(err2.Error())
 	}

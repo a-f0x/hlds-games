@@ -8,13 +8,13 @@ import (
 )
 
 type AmqpProducer struct {
-	client      *AmqpClientV2
+	client      *amqpClient
 	isConnected *common.AtomicBool
 }
 
 func NewAmqpProducer(host string, port int64, user string, password string, reconnectionTimeSec int32) *AmqpProducer {
 	p := AmqpProducer{
-		client:      newAmqpClientV2(host, port, user, password, reconnectionTimeSec),
+		client:      newAmqpClient(host, port, user, password, reconnectionTimeSec),
 		isConnected: new(common.AtomicBool),
 	}
 	connectionInfo := p.client.connect()

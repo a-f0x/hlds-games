@@ -1,7 +1,7 @@
 package launcher
 
 import (
-	"hlds-games/internal/common"
+	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/messages"
 )
 
@@ -11,19 +11,19 @@ const (
 )
 
 type AmqpGameEventSender struct {
-	amqpClient *common.AmqpClient
+	amqpClient *rabbit.AmqpProducer
 }
 
-func NewAmqpGameEventSender(client *common.AmqpClient) *AmqpGameEventSender {
+func NewAmqpGameEventSender(client *rabbit.AmqpProducer) *AmqpGameEventSender {
 	return &AmqpGameEventSender{
 		amqpClient: client,
 	}
 }
 
 func (agc *AmqpGameEventSender) SendHeartBeat(message messages.Message[messages.HeartBeatMessagePayload]) error {
-	return agc.amqpClient.MarshalAndSend(message, common.HeartBeatQueue, heartBeatExpirationTimeMs)
+	return agc.amqpClient.MarshallAndSend(message, rabbit.HeartBeatQueue, heartBeatExpirationTimeMs)
 }
 
 func (agc *AmqpGameEventSender) SendGameEvent(message messages.Message[messages.ActionMessagePayload]) error {
-	return agc.amqpClient.MarshalAndSend(message, common.GameEventsQueue, actionExpirationTimeMs)
+	return agc.amqpClient.MarshallAndSend(message, rabbit.GameEventsQueue, actionExpirationTimeMs)
 }

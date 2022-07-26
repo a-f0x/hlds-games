@@ -10,14 +10,14 @@ import (
 Умеет в рекконект консюмеров только к очередям с роутинг кеем!
 */
 type AmqpConsumer struct {
-	client    *AmqpClientV2
+	client    *amqpClient
 	startChan chan bool
 	streams   map[string]*stream
 }
 
 func NewAmqpConsumer(host string, port int64, user string, password string, reconnectionTimeSec int32) *AmqpConsumer {
 	c := AmqpConsumer{
-		client:  newAmqpClientV2(host, port, user, password, reconnectionTimeSec),
+		client:  newAmqpClient(host, port, user, password, reconnectionTimeSec),
 		streams: make(map[string]*stream),
 	}
 	connectionInfo := c.client.connect()
@@ -42,6 +42,11 @@ func (ac *AmqpConsumer) streaming() {
 }
 
 func (ac *AmqpConsumer) connectStream(stream *stream) {
+	amqpChannel := ac.client.channel
+
+	if amqpChannel == nil {
+		return
+	}
 	messages, err := ac.client.channel.Consume(
 		stream.queue,
 		"",
@@ -82,7 +87,6 @@ func (ac *AmqpConsumer) Subscribe(queue string) (<-chan []byte, error) {
 	if alreadyExistStream != nil {
 		return nil, errors.New(fmt.Sprintf("already subscribed to queue %s", queue))
 	}
-
 	stream := &stream{
 		queue:           queue,
 		outChan:         make(chan []byte),

@@ -2,17 +2,17 @@ package eventcollector
 
 import (
 	"encoding/json"
-	"hlds-games/internal/common"
+	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/messages"
 	"log"
 )
 
 type EventCollector struct {
-	amqpClient *common.AmqpClient
+	amqpClient *rabbit.AmqpConsumer
 }
 
 func NewEventCollector(
-	client *common.AmqpClient,
+	client *rabbit.AmqpConsumer,
 ) *EventCollector {
 	return &EventCollector{
 		amqpClient: client,
@@ -32,11 +32,11 @@ func (ec *EventCollector) collect(
 	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload],
 	actionChannel chan messages.Message[messages.ActionMessagePayload],
 ) {
-	heartBeatBytesChannel, err := ec.amqpClient.Subscribe(common.HeartBeatQueue)
+	heartBeatBytesChannel, err := ec.amqpClient.Subscribe(rabbit.HeartBeatQueue)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	actionBeatBytesChannel, err2 := ec.amqpClient.Subscribe(common.GameEventsQueue)
+	actionBeatBytesChannel, err2 := ec.amqpClient.Subscribe(rabbit.GameEventsQueue)
 	if err2 != nil {
 		log.Fatalf(err2.Error())
 	}
