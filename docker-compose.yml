@@ -3,6 +3,10 @@ version: "3.8"
 services:
   mariadb:
     image: mariadb:10.7.4
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: S3cret
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -10,13 +14,17 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     volumes:
       - ./mariadb:/var/lib/mysql
-    network_mode: host
   rabbitmq:
     image: rabbitmq:3.9.21-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-    network_mode: host
+    expose:
+      - "5672"
+      - "15672"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
     deploy:
       resources:
         limits:
@@ -28,7 +36,7 @@ services:
       - cs
     depends_on:
       - rabbitmq
-    image: af0x/rehlds:cs-nosteam
+    image: af0x/hlds-agent:cs-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
@@ -43,13 +51,17 @@ services:
       - ./docker/cs/server.cfg:/hlds/cstrike/server.cfg
       - ./docker/cs/maps:/hlds/cstrike/maps
       - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
-      - ./out/game_agent:/hlds/game_agent
-    network_mode: host
     deploy:
       resources:
         limits:
           cpus: '2.5'
           memory: 512M
+    expose:
+      - "27015/tcp"
+      - "27015/udp"
+    ports:
+      - "27015:27015/tcp"
+      - "27015:27015/udp"
     entrypoint: ./game_agent
   csdm:
     profiles:
@@ -57,7 +69,7 @@ services:
       - csdm
     depends_on:
       - rabbitmq
-    image: af0x/rehlds:csdm-nosteam
+    image: af0x/hlds-agent:csdm-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
@@ -75,12 +87,17 @@ services:
       - ./out/game_agent:/hlds/game_agent
 
       - ./data/csstats.dat:/docker/cstrike/addons/amxmodx/data/csstats.dat
-    network_mode: host
     deploy:
       resources:
         limits:
           cpus: '2.5'
           memory: 512M
+    expose:
+      - "27017/tcp"
+      - "27017/udp"
+    ports:
+      - "27017:27017/tcp"
+      - "27017:27017/udp"
     entrypoint: ./game_agent
   half-life:
     profiles:
@@ -88,7 +105,7 @@ services:
       - hl
     depends_on:
       - rabbitmq
-    image: af0x/rehlds:hl-nosteam
+    image: af0x/hlds-agent:hl-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
       RABBITMQ_HOST: rabbitmq
@@ -104,11 +121,19 @@ services:
       - ./docker/half-life/maps.ini:/hlds/valve/addons/amxmodx/configs/maps.ini
       - ./docker/half-life/server.cfg:/hlds/valve/server.cfg
       - ./docker/half-life/maps:/hlds/valve/maps
-      - ./out/game_agent:/hlds/game_agent
-    network_mode: host
     deploy:
       resources:
         limits:
           cpus: '2.5'
           memory: 512M
+    expose:
+      - "27016/tcp"
+      - "27016/udp"
+    ports:
+      - "27016:27016/tcp"
+      - "27016:27016/udp"
     entrypoint: ./game_agent
+networks:
+  default:
+    external: true
+    name: hlds-net

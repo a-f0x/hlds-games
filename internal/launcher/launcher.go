@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	logReceiverPort int64  = 9654
-	hldsServerHost  string = "127.0.0.1"
+	hldsServerHost string = "127.0.0.1"
 )
 
 type Launcher struct {
 	hldsServerPort   int64
+	logReceiverPort  int64
 	gMap             string
 	gameType         string
 	rconPassword     string
@@ -32,8 +32,10 @@ func NewLauncher(
 	gameType string,
 	rconPassword string,
 ) *Launcher {
+	logReceiverPort := hldsServerPort - 100
 	return &Launcher{
 		hldsServerPort:   hldsServerPort,
+		logReceiverPort:  logReceiverPort,
 		gMap:             gMap,
 		gameType:         gameType,
 		rconPassword:     rconPassword,
@@ -65,7 +67,7 @@ func (a *Launcher) RunGame() (
 }
 
 func (a *Launcher) startGame() {
-	err := newHldsGames(a.rconPassword, a.hldsServerPort, logReceiverPort).runGame(a.gameType, a.gMap)
+	err := newHldsGames(a.rconPassword, a.hldsServerPort, a.logReceiverPort).runGame(a.gameType, a.gMap)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

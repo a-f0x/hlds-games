@@ -33,7 +33,6 @@ func (l *Receiver) Start() error {
 	}
 
 	connection, err := net.ListenUDP("udp4", udpServer)
-	defer connection.Close()
 	if err != nil {
 		return fmt.Errorf("failed to start start udp server for listet event from cs server: %s ", err)
 	}
