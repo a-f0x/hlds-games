@@ -44,6 +44,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27015
+      GRPC_API_PORT: 8090
       MAP: de_dust2_2x2
       GAME_TYPE: cs-classic
     volumes:
@@ -59,6 +60,7 @@ services:
     expose:
       - "27015/tcp"
       - "27015/udp"
+      - "8090"
     ports:
       - "27015:27015/tcp"
       - "27015:27015/udp"
@@ -77,6 +79,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27017
+      GRPC_API_PORT: 8090
       MAP: de_dust2_2x2
       GAME_TYPE: cs-dm
     volumes:
@@ -95,9 +98,11 @@ services:
     expose:
       - "27017/tcp"
       - "27017/udp"
+      - "8090"
     ports:
       - "27017:27017/tcp"
       - "27017:27017/udp"
+      - "8090:8090"
     entrypoint: ./game_agent
   half-life:
     profiles:
@@ -113,6 +118,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       PORT: 27016
+      GRPC_API_PORT: 8090
       MAP: 1337_Street
       GAME_TYPE: half-life
 
@@ -129,6 +135,7 @@ services:
     expose:
       - "27016/tcp"
       - "27016/udp"
+      - "8090"
     ports:
       - "27016:27016/tcp"
       - "27016:27016/udp"

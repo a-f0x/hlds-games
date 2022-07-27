@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/eventcollector"
@@ -10,7 +11,11 @@ import (
 )
 
 func main() {
-	common.FakeEnvRabbit("192.168.88.44")
+	api.GetInfo("127.0.0.1", 8090)
+
+}
+func monitoring() {
+	common.FakeEnvRabbit("127.0.0.1")
 	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
 	if err != nil {
 		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
@@ -27,11 +32,11 @@ func main() {
 	heartBeatChannel, actionChannel := ec.Collect()
 	for {
 		select {
-
 		case heartBeat := <-heartBeatChannel:
 			message, _ := json.Marshal(heartBeat)
 			log.Printf("heartBeat, %s", string(message))
-
+			api.GetInfo("127.0.0.1", 8090)
+			return
 		case action := <-actionChannel:
 			message, _ := json.Marshal(action)
 			log.Printf("action, %s", string(message))

@@ -1,26 +1,25 @@
 package main
 
 import (
+	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
+	"hlds-games/internal/config"
 	"hlds-games/internal/launcher"
+	"hlds-games/internal/rcon"
 	"log"
-	"strconv"
 )
 
 func main() {
-	hldsServerPort, err := strconv.ParseInt(*common.GetEnv("PORT"), 10, 64)
-	if err != nil {
-		log.Fatalf("Invalid game PORT %s", err.Error())
-	}
-	ga := launcher.NewLauncher(
-		hldsServerPort,
-		*common.GetEnv("MAP"),
-		*common.GetEnv("GAME_TYPE"),
-		*common.GetEnv("RCON_PASSWORD"),
-	)
+	hldsGameConfig := config.GetHldsGameConfig()
+	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
+
+	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, config.GetGrpcApiConfig(), rc)
+	go apiServer.RunServer()
+
+	ga := launcher.NewLauncher(hldsGameConfig)
+	heartBeatChannel, actionChannel := ga.RunGame(*common.GetEnv("MAP"))
 	gameEventSender := getGameEventSender()
-	heartBeatChannel, actionChannel := ga.RunGame()
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
@@ -35,17 +34,14 @@ func main() {
 			}
 		}
 	}
-
 }
 func getGameEventSender() *launcher.AmqpGameEventSender {
-	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
-	if err != nil {
-		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
-	}
+	amqpConfig := config.GetRabbitConfig()
 	client := rabbit.NewAmqpProducer(
-		*common.GetEnv("RABBITMQ_HOST"),
-		amqpPort, *common.GetEnv("RABBITMQ_USER"),
-		*common.GetEnv("RABBITMQ_PASSWORD"),
+		amqpConfig.RabbitHost,
+		amqpConfig.RabbitPort,
+		amqpConfig.RabbitUser,
+		amqpConfig.RabbitPassword,
 		2,
 	)
 	return launcher.NewAmqpGameEventSender(client)

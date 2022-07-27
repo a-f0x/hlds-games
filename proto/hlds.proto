@@ -1,0 +1,20 @@
+syntax = "proto3";
+package ru.ton618.hlds.service.v1;
+
+option go_package = "ru.ton618.hlds/internal/api";
+option java_multiple_files = true;
+option java_package = "ru.ton618.hlds.v1";
+option java_outer_classname = "HalfLifeDedicatedServer";
+import "hlds_messages.proto";
+
+
+
+service HalfLifeDedicatedServer{
+  rpc GetServerStatus(ru.ton618.hlds.model.v1.GetGameStatusRequest) returns (ru.ton618.hlds.model.v1.GameStatus);
+
+  rpc ExecuteRconCommand(ru.ton618.hlds.model.v1.RconCommand) returns (ru.ton618.hlds.model.v1.RconCommandResult);
+}
+
+
+
+

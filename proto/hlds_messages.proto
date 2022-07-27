@@ -1,0 +1,23 @@
+syntax = "proto3";
+package ru.ton618.hlds.model.v1;
+
+option go_package = "ru.ton618.hlds/internal/api";
+option java_multiple_files = true;
+option java_package = "ru.ton618.hlds.v1";
+
+message GetGameStatusRequest{}
+
+message GameStatus {
+  string game = 1;
+  string name = 2;
+  string map = 3;
+  int32 players = 4;
+}
+
+message RconCommand{
+  string command = 1;
+}
+
+message RconCommandResult{
+  string result = 1;
+}

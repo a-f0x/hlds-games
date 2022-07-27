@@ -1,24 +1,19 @@
 package launcher
 
 import (
+	"fmt"
 	"hlds-games/internal/common"
+	"hlds-games/internal/config"
 	logReceiver "hlds-games/internal/log"
 	"hlds-games/internal/messages"
 	"hlds-games/internal/rcon"
 	"log"
+	"os/exec"
 	"time"
 )
 
-const (
-	hldsServerHost string = "127.0.0.1"
-)
-
 type Launcher struct {
-	hldsServerPort   int64
-	logReceiverPort  int64
-	gMap             string
-	gameType         string
-	rconPassword     string
+	hldsGameConfig   *config.HldsGameConfig
 	rcon             *rcon.Rcon
 	logReceiver      *logReceiver.Receiver
 	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload]
@@ -26,21 +21,11 @@ type Launcher struct {
 	isConnected      *common.AtomicBool
 }
 
-func NewLauncher(
-	hldsServerPort int64,
-	gMap string,
-	gameType string,
-	rconPassword string,
-) *Launcher {
-	logReceiverPort := hldsServerPort - 100
+func NewLauncher(hldsGameConfig *config.HldsGameConfig) *Launcher {
 	return &Launcher{
-		hldsServerPort:   hldsServerPort,
-		logReceiverPort:  logReceiverPort,
-		gMap:             gMap,
-		gameType:         gameType,
-		rconPassword:     rconPassword,
-		logReceiver:      logReceiver.NewReceiver(logReceiverPort, make(chan logReceiver.Event)),
-		rcon:             rcon.NewRcon(hldsServerHost, hldsServerPort, rconPassword),
+		hldsGameConfig:   hldsGameConfig,
+		logReceiver:      logReceiver.NewReceiver(hldsGameConfig.LogReceiverPort, make(chan logReceiver.Event)),
+		rcon:             rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword),
 		heartBeatChannel: make(chan messages.Message[messages.HeartBeatMessagePayload]),
 		actionChannel:    make(chan messages.Message[messages.ActionMessagePayload]),
 		isConnected:      new(common.AtomicBool),
@@ -52,53 +37,46 @@ func NewLauncher(
 //	Запустить игру
 //	Дождаться когда сервер будет готов к игре с помощью функции heartBeat
 // После этого поднять logReceiver
-func (a *Launcher) RunGame() (
+func (l *Launcher) RunGame(gameMap string) (
 	<-chan messages.Message[messages.HeartBeatMessagePayload],
 	<-chan messages.Message[messages.ActionMessagePayload],
 ) {
-	a.startGame()
+	l.startGame(gameMap)
 	isOnline := make(chan messages.ServerInfo)
 	go func() {
 		serverInfo := <-isOnline
-		a.startLog(serverInfo)
+		l.startLog(serverInfo)
 	}()
-	a.heartBeat(2, isOnline)
-	return a.heartBeatChannel, a.actionChannel
+	l.heartBeat(2, isOnline)
+	return l.heartBeatChannel, l.actionChannel
 }
 
-func (a *Launcher) startGame() {
-	err := newHldsGames(a.rconPassword, a.hldsServerPort, a.logReceiverPort).runGame(a.gameType, a.gMap)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-}
-
-func (a *Launcher) startLog(info messages.ServerInfo) {
+func (l *Launcher) startLog(info messages.ServerInfo) {
 	listenLogEvents := func(info messages.ServerInfo) {
 		log.Println("Listen to log events")
 		for {
-			logEvent := <-a.logReceiver.LogEvent
+			logEvent := <-l.logReceiver.LogEvent
 			message := messages.Message[messages.ActionMessagePayload]{
 				ServerInfo:  info,
 				Time:        logEvent.Time,
 				MessageType: messages.Action,
 				Payload:     newActionMessagePayload(logEvent),
 			}
-			a.actionChannel <- message
+			l.actionChannel <- message
 		}
 	}
 	go listenLogEvents(info)
 	go func() {
-		err := a.logReceiver.Start()
+		err := l.logReceiver.Start()
 		if err != nil {
 			log.Fatalf(err.Error())
 		}
 	}()
 }
 
-func (a *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.ServerInfo) {
+func (l *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.ServerInfo) {
 	status := func() *rcon.ServerStatus {
-		response, err := a.rcon.GetServerStatus()
+		response, err := l.rcon.GetServerStatus()
 		if err != nil {
 			log.Printf("Fail heart beat: %s", err)
 			return nil
@@ -114,11 +92,11 @@ func (a *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 			serverStatus := status()
 			if serverStatus != nil {
 				serverInfo := messages.ServerInfo{
-					Game: a.gameType,
+					Game: l.hldsGameConfig.GameType,
 					Name: serverStatus.Name,
 					Host: serverStatus.Host,
 				}
-				a.heartBeatChannel <- messages.Message[messages.HeartBeatMessagePayload]{
+				l.heartBeatChannel <- messages.Message[messages.HeartBeatMessagePayload]{
 					ServerInfo:  serverInfo,
 					Time:        time.Now().Unix(),
 					MessageType: messages.HeartBeat,
@@ -127,11 +105,40 @@ func (a *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 						Map:     serverStatus.Map,
 					},
 				}
-				if !a.isConnected.GetAndSet(true) {
+				if !l.isConnected.GetAndSet(true) {
 					isOnline <- serverInfo
 					close(isOnline)
 				}
 			}
+		}
+	}()
+}
+
+func (l *Launcher) startGame(gameMap string) {
+	const (
+		halfLife               = "half-life"
+		counterStrike          = "cs-classic"
+		counterStrikeDeadMatch = "cs-dm"
+	)
+
+	games := []string{halfLife, counterStrike, counterStrikeDeadMatch}
+
+	var command string
+	switch l.hldsGameConfig.GameType {
+	case counterStrike, counterStrikeDeadMatch:
+		command = fmt.Sprintf("./hlds_run -game cstrike +rcon_password %s +port %d +maxplayers 32 +map %s +logaddress 127.0.0.1 %d",
+			l.hldsGameConfig.RconPassword, l.hldsGameConfig.HldsGamePort, gameMap, l.hldsGameConfig.LogReceiverPort)
+	case halfLife:
+		command = fmt.Sprintf("./hlds_run -game valve +rcon_password %s +port %d +maxplayers 32 +map %s +logaddress 127.0.0.1 %d",
+			l.hldsGameConfig.RconPassword, l.hldsGameConfig.HldsGamePort, gameMap, l.hldsGameConfig.LogReceiverPort)
+	default:
+		log.Fatalf(fmt.Sprintf("Unknown game type: %s. Available type is %v", l.hldsGameConfig.GameType, games))
+	}
+	go func() {
+		cmd := exec.Command("sh", "-c", command)
+		_, err := cmd.Output()
+		if err != nil {
+			log.Fatalf(err.Error())
 		}
 	}()
 }

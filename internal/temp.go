@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
+	"hlds-games/internal/config"
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
 	"log"
@@ -13,7 +15,13 @@ import (
 )
 
 func main() {
-	testRabbit()
+	common.FakeEnvGameCfg()
+	hldsGameConfig := config.GetHldsGameConfig()
+	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
+	grpcApiConfig := config.GetGrpcApiConfig()
+	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
+	go apiServer.RunServer()
+	api.GetInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
 }
 
 func testRabbit() {
