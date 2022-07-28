@@ -1,6 +1,7 @@
 package eventcollector
 
 import (
+	"context"
 	"encoding/json"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/messages"
@@ -19,26 +20,30 @@ func NewEventCollector(
 	}
 }
 
-func (ec *EventCollector) Collect() (
+func (ec *EventCollector) Collect(ctx context.Context) (
 	<-chan messages.Message[messages.HeartBeatMessagePayload],
 	<-chan messages.Message[messages.ActionMessagePayload],
+	error,
 ) {
 	heartBeatChannel := make(chan messages.Message[messages.HeartBeatMessagePayload])
 	actionChannel := make(chan messages.Message[messages.ActionMessagePayload])
-	ec.collect(heartBeatChannel, actionChannel)
-	return heartBeatChannel, actionChannel
+	err := ec.collect(ctx, heartBeatChannel, actionChannel)
+	if err != nil {
+		return nil, nil, err
+	}
+	return heartBeatChannel, actionChannel, nil
 }
-func (ec *EventCollector) collect(
+func (ec *EventCollector) collect(ctx context.Context,
 	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload],
 	actionChannel chan messages.Message[messages.ActionMessagePayload],
-) {
+) error {
 	heartBeatBytesChannel, err := ec.amqpClient.Subscribe(rabbit.HeartBeatQueue)
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 	actionBeatBytesChannel, err2 := ec.amqpClient.Subscribe(rabbit.GameEventsQueue)
 	if err2 != nil {
-		log.Fatalf(err2.Error())
+		return err2
 	}
 	go func() {
 		for {
@@ -60,5 +65,5 @@ func (ec *EventCollector) collect(
 			}
 		}
 	}()
-
+	return nil
 }

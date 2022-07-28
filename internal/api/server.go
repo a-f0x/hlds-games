@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"hlds-games/internal/config"
 	"hlds-games/internal/rcon"
 	"log"
@@ -43,7 +42,7 @@ func (h *HLDSApiServer) RunServer() {
 
 }
 
-func (h *HLDSApiServer) GetServerStatus(context.Context, *GetGameStatusRequest) (*GameStatus, error) {
+func (h *HLDSApiServer) GetServerStatus(ctx context.Context, request *GetGameStatusRequest) (*GameStatus, error) {
 	result, rconError := h.rcon.GetServerStatus()
 	if rconError != nil {
 		return nil, rconError
@@ -64,22 +63,4 @@ func (h *HLDSApiServer) ExecuteRconCommand(ctx context.Context, request *RconCom
 	return &RconCommandResult{
 		Result: *result,
 	}, nil
-}
-
-func GetInfo(host string, port int64) {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", host, port),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		//grpc.WithBlock(),
-	)
-	if err != nil {
-		log.Println(err)
-		log.Fatalf(fmt.Sprintf("connection to server failed. %s", err))
-	}
-	defer conn.Close()
-	client := NewHalfLifeDedicatedServerClient(conn)
-	status, responseError := client.GetServerStatus(context.Background(), &GetGameStatusRequest{})
-	if responseError != nil {
-		log.Fatalf("Response error %s", responseError)
-	}
-	log.Printf("response: %v", status)
 }

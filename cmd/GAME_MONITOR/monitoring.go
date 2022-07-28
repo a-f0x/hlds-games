@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
@@ -11,7 +13,11 @@ import (
 )
 
 func main() {
-	api.GetInfo("127.0.0.1", 8090)
+	status, err := api.GetServerInfo("127.0.0.1", 8090)(context.TODO())
+	if err != nil {
+		log.Fatalf(fmt.Sprintf("fail to get server status. %s"), err.Error())
+	}
+	log.Printf("status = %v", status)
 
 }
 func monitoring() {
@@ -29,13 +35,16 @@ func monitoring() {
 	)
 
 	ec := eventcollector.NewEventCollector(client)
-	heartBeatChannel, actionChannel := ec.Collect()
+	heartBeatChannel, actionChannel, error := ec.Collect(context.TODO())
+	if error != nil {
+		log.Fatalf(fmt.Sprintf("%s"), error.Error())
+	}
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
 			message, _ := json.Marshal(heartBeat)
 			log.Printf("heartBeat, %s", string(message))
-			api.GetInfo("127.0.0.1", 8090)
+			api.GetServerInfo("127.0.0.1", 8090)(context.Background())
 			return
 		case action := <-actionChannel:
 			message, _ := json.Marshal(action)
