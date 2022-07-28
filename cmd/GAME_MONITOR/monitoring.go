@@ -36,7 +36,7 @@ func monitoring() {
 		log.Fatalf(fmt.Sprintf("%s", err.Error()))
 	}
 
-	gm := management.NewGameManager("0.0.0.0", 25)
+	gm := management.NewGameManager("192.168.88.61", 27017)
 	count := 0
 	for {
 		select {

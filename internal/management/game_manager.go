@@ -8,17 +8,15 @@ import (
 )
 
 type GameManager struct {
-	games        map[string]Game
-	mu           sync.Mutex
-	externalIp   string
-	externalPort int64
+	games      map[string]Game
+	mu         sync.Mutex
+	externalIp string
 }
 
 func NewGameManager(externalIp string, externalPort int64) *GameManager {
 	manager := &GameManager{
-		games:        make(map[string]Game),
-		externalIp:   externalIp,
-		externalPort: externalPort,
+		games:      make(map[string]Game),
+		externalIp: externalIp,
 	}
 	go func() {
 		ticker := time.NewTicker(time.Duration(10) * time.Second)
@@ -48,7 +46,7 @@ func (g *GameManager) RegisterGame(heartBeat messages.Message[messages.HeartBeat
 		ApiHost:        heartBeat.Payload.ApiHost,
 		ApiPort:        heartBeat.Payload.ApiPort,
 		ExternalIp:     g.externalIp,
-		ExternalPort:   g.externalPort,
+		ExternalPort:   heartBeat.Payload.GamePort,
 		registeredTime: heartBeat.Time,
 	}
 	g.games[game.Key()] = game

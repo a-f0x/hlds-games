@@ -2,6 +2,8 @@ version: "3.8"
 
 services:
   mariadb:
+    profiles:
+      - noop
     image: mariadb:10.7.4
     ports:
       - "3306:3306"
