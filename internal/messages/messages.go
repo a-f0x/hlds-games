@@ -10,7 +10,8 @@ const (
 type ServerInfo struct {
 	Game string `json:"game"`
 	Name string `json:"name"`
-	Host string `json:"game_host"`
+	Host string `json:"host"`
+	Port int64  `json:"port"`
 }
 
 type Message[P messageConstraint] struct {
@@ -27,6 +28,7 @@ type messageConstraint interface {
 type HeartBeatMessagePayload struct {
 	Players int32  `json:"players"`
 	Map     string `json:"map"`
+	ApiHost string `json:"api_host"`
 }
 
 type Player struct {

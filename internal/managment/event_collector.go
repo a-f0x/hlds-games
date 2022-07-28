@@ -1,4 +1,4 @@
-package eventcollector
+package managment
 
 import (
 	"context"

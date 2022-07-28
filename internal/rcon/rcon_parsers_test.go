@@ -25,7 +25,8 @@ func Test_parseServerStatus(t *testing.T) {
 			args{[]byte("hostname:  CS 1.6 CLASSIC\nversion :  48/1.1.2.7/Stdio 6153 secure  (10)\ntcp/ip  :  172.21.0.3:27015\nmap     :  de_dust2 at: 0 x, 0 y, 0 z\nplayers :  12 active (32 max)\n\n#      name userid uniqueid frag time ping loss adr\n0 users\n\u0000")},
 			&ServerStatus{
 				Name:    "CS 1.6 CLASSIC",
-				Host:    "172.21.0.3:27015",
+				Host:    "172.21.0.3",
+				Port:    27015,
 				Players: 12,
 				Map:     "de_dust2",
 			},

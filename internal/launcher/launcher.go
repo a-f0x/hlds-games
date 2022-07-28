@@ -95,6 +95,7 @@ func (l *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 					Game: l.hldsGameConfig.GameType,
 					Name: serverStatus.Name,
 					Host: serverStatus.Host,
+					Port: serverStatus.Port,
 				}
 				l.heartBeatChannel <- messages.Message[messages.HeartBeatMessagePayload]{
 					ServerInfo:  serverInfo,

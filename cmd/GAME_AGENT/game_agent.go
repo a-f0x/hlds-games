@@ -23,6 +23,7 @@ func main() {
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
+			heartBeat.Payload.ApiHost = ""
 			err := gameEventSender.SendHeartBeat(heartBeat)
 			if err != nil {
 				log.Printf("Error send heart beat notification. %s", err)
