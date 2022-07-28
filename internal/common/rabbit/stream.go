@@ -1,8 +1,12 @@
 package rabbit
 
-import "github.com/rabbitmq/amqp091-go"
+import (
+	"context"
+	"github.com/rabbitmq/amqp091-go"
+)
 
 type stream struct {
+	ctx             context.Context
 	queue           string
 	incomingChannel <-chan amqp091.Delivery
 	outChan         chan []byte

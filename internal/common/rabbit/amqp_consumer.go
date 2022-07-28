@@ -1,6 +1,7 @@
 package rabbit
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -77,12 +78,13 @@ func (ac *AmqpConsumer) watch(connectionInfo <-chan bool) {
 
 }
 
-func (ac *AmqpConsumer) Subscribe(queue string) (<-chan []byte, error) {
+func (ac *AmqpConsumer) Subscribe(ctx context.Context, queue string) (<-chan []byte, error) {
 	alreadyExistStream := ac.streams[queue]
 	if alreadyExistStream != nil {
 		return nil, errors.New(fmt.Sprintf("already subscribed to queue %s", queue))
 	}
 	stream := &stream{
+		ctx:             ctx,
 		queue:           queue,
 		outChan:         make(chan []byte),
 		incomingChannel: nil,

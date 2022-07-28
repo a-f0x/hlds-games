@@ -8,40 +8,32 @@ import (
 	"log"
 )
 
-type EventCollector struct {
-	amqpClient *rabbit.AmqpConsumer
-}
+//todo разобраться как использовать контекст для отписки и корректного закрытия канала и конекшена ребита
 
-func NewEventCollector(
-	client *rabbit.AmqpConsumer,
-) *EventCollector {
-	return &EventCollector{
-		amqpClient: client,
-	}
-}
-
-func (ec *EventCollector) Collect(ctx context.Context) (
+func Collect(ctx context.Context, amqpClient *rabbit.AmqpConsumer) (
 	<-chan messages.Message[messages.HeartBeatMessagePayload],
 	<-chan messages.Message[messages.ActionMessagePayload],
 	error,
 ) {
 	heartBeatChannel := make(chan messages.Message[messages.HeartBeatMessagePayload])
 	actionChannel := make(chan messages.Message[messages.ActionMessagePayload])
-	err := ec.collect(ctx, heartBeatChannel, actionChannel)
+	err := collect(ctx, amqpClient, heartBeatChannel, actionChannel)
 	if err != nil {
 		return nil, nil, err
 	}
 	return heartBeatChannel, actionChannel, nil
 }
-func (ec *EventCollector) collect(ctx context.Context,
+func collect(
+	ctx context.Context,
+	amqpClient *rabbit.AmqpConsumer,
 	heartBeatChannel chan messages.Message[messages.HeartBeatMessagePayload],
 	actionChannel chan messages.Message[messages.ActionMessagePayload],
 ) error {
-	heartBeatBytesChannel, err := ec.amqpClient.Subscribe(rabbit.HeartBeatQueue)
+	heartBeatBytesChannel, err := amqpClient.Subscribe(ctx, rabbit.HeartBeatQueue)
 	if err != nil {
 		return err
 	}
-	actionBeatBytesChannel, err2 := ec.amqpClient.Subscribe(rabbit.GameEventsQueue)
+	actionBeatBytesChannel, err2 := amqpClient.Subscribe(ctx, rabbit.GameEventsQueue)
 	if err2 != nil {
 		return err2
 	}
