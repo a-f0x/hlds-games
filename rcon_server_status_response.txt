@@ -1,0 +1,8 @@
+hostname:  CS 1.6 CLASSIC
+version :  48/1.1.2.7/Stdio 6153 secure  (10)
+tcp/ip  :  172.21.0.3:27015
+map     :  de_dust2 at: 0 x, 0 y, 0 z
+players :  12 active (32 max)
+
+#      name userid uniqueid frag time ping loss adr
+0 users
