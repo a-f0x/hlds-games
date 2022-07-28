@@ -14,7 +14,8 @@ func main() {
 	hldsGameConfig := config.GetHldsGameConfig()
 	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
 
-	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, config.GetGrpcApiConfig(), rc)
+	grpcApiConfig := config.GetGrpcApiConfig()
+	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
 	go apiServer.RunServer()
 
 	ga := launcher.NewLauncher(hldsGameConfig)
@@ -23,7 +24,8 @@ func main() {
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
-			heartBeat.Payload.ApiHost = ""
+			heartBeat.Payload.ApiHost = heartBeat.Payload.GameHost
+			heartBeat.Payload.ApiPort = grpcApiConfig.GrpcApiPort
 			err := gameEventSender.SendHeartBeat(heartBeat)
 			if err != nil {
 				log.Printf("Error send heart beat notification. %s", err)

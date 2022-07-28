@@ -49,8 +49,9 @@ func (ac *amqpClient) connect() <-chan bool {
 }
 
 func (ac *amqpClient) handleConnection(isConnectedChan chan<- bool) error {
+	ticker := time.NewTicker(time.Duration(ac.reconnectSec) * time.Second)
 	for {
-		time.Sleep(time.Duration(ac.reconnectSec) * time.Second)
+		<-ticker.C
 		if ac.isConnected() {
 			continue
 		}

@@ -84,26 +84,24 @@ func (l *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 		return response
 	}
 	go func() {
-		initDelay := time.Duration(initialDelaySec) * time.Second
-		periodDelay := time.Duration(2) * time.Second
-		time.Sleep(initDelay)
+		ticker := time.NewTicker(time.Duration(2) * time.Second)
 		for {
-			time.Sleep(periodDelay)
+			<-ticker.C
 			serverStatus := status()
 			if serverStatus != nil {
 				serverInfo := messages.ServerInfo{
-					Game: l.hldsGameConfig.GameType,
-					Name: serverStatus.Name,
-					Host: serverStatus.Host,
-					Port: serverStatus.Port,
+					GameType: l.hldsGameConfig.GameType,
+					GameName: serverStatus.Name,
 				}
 				l.heartBeatChannel <- messages.Message[messages.HeartBeatMessagePayload]{
 					ServerInfo:  serverInfo,
 					Time:        time.Now().Unix(),
 					MessageType: messages.HeartBeat,
 					Payload: messages.HeartBeatMessagePayload{
-						Players: serverStatus.Players,
-						Map:     serverStatus.Map,
+						Players:  serverStatus.Players,
+						Map:      serverStatus.Map,
+						GameHost: serverStatus.Host,
+						GamePort: serverStatus.Port,
 					},
 				}
 				if !l.isConnected.GetAndSet(true) {
@@ -116,12 +114,9 @@ func (l *Launcher) heartBeat(initialDelaySec int64, isOnline chan messages.Serve
 }
 
 func (l *Launcher) startGame(gameMap string) {
-	const (
-		halfLife               = "half-life"
-		counterStrike          = "cs-classic"
-		counterStrikeDeadMatch = "cs-dm"
-	)
-
+	halfLife := "half-life"
+	counterStrike := "cs-classic"
+	counterStrikeDeadMatch := "cs-dm"
 	games := []string{halfLife, counterStrike, counterStrikeDeadMatch}
 
 	var command string

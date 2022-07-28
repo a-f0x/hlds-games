@@ -1,11 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
-	"hlds-games/internal/config"
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
 	"log"
@@ -15,13 +14,15 @@ import (
 )
 
 func main() {
-	common.FakeEnvGameCfg()
-	hldsGameConfig := config.GetHldsGameConfig()
-	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
-	grpcApiConfig := config.GetGrpcApiConfig()
-	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
-	go apiServer.RunServer()
-	api.GetInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
+	//common.FakeEnvGameCfg()
+	//hldsGameConfig := config.GetHldsGameConfig()
+	//rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
+	//grpcApiConfig := config.GetGrpcApiConfig()
+	//apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
+	//go apiServer.RunServer()
+	////api.GetInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
+
+	testRabbit()
 }
 
 func testRabbit() {
@@ -76,7 +77,7 @@ func consume() {
 		1,
 	)
 	//time.Sleep(time.Duration(5) * time.Second)
-	subscribeGameEventsQueue, err := consumer.Subscribe(rabbit.GameEventsQueue)
+	subscribeGameEventsQueue, err := consumer.Subscribe(context.TODO(), rabbit.GameEventsQueue)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -89,7 +90,7 @@ func consume() {
 	}()
 
 	//time.Sleep(time.Duration(5) * time.Second)
-	subscribeHeartBeatQueue, err2 := consumer.Subscribe(rabbit.HeartBeatQueue)
+	subscribeHeartBeatQueue, err2 := consumer.Subscribe(context.TODO(), rabbit.HeartBeatQueue)
 	if err2 != nil {
 		log.Fatalf(err2.Error())
 	}

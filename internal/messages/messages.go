@@ -8,10 +8,8 @@ const (
 )
 
 type ServerInfo struct {
-	Game string `json:"game"`
-	Name string `json:"name"`
-	Host string `json:"host"`
-	Port int64  `json:"port"`
+	GameType string `json:"game_type"`
+	GameName string `json:"game_name"`
 }
 
 type Message[P messageConstraint] struct {
@@ -26,9 +24,12 @@ type messageConstraint interface {
 }
 
 type HeartBeatMessagePayload struct {
-	Players int32  `json:"players"`
-	Map     string `json:"map"`
-	ApiHost string `json:"api_host"`
+	Players  int32  `json:"players"`
+	Map      string `json:"map"`
+	GameHost string `json:"game_host"`
+	GamePort int64  `json:"game_port"`
+	ApiHost  string `json:"api_host"`
+	ApiPort  int64  `json:"api_port"`
 }
 
 type Player struct {

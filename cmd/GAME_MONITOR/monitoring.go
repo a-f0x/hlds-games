@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
-	"hlds-games/internal/managment"
+	"hlds-games/internal/management"
 	"log"
+	"time"
 )
 
 func main() {
@@ -31,24 +31,31 @@ func monitoring() {
 		rabbitConfig.RabbitPassword,
 		2,
 	)
-	heartBeatChannel, actionChannel, err := managment.Collect(context.TODO(), client)
+	heartBeatChannel, actionChannel, err := management.Collect(context.TODO(), client)
 	if err != nil {
 		log.Fatalf(fmt.Sprintf("%s", err.Error()))
 	}
+
+	gm := management.NewGameManager("0.0.0.0", 25)
+	count := 0
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
+			count++
 			message, _ := json.Marshal(heartBeat)
-			log.Printf("heartBeat, %s", string(message))
-			status, clientError := api.GetServerInfo("127.0.0.1", 8090)(context.TODO())
-			if clientError != nil {
-				log.Fatalf(fmt.Sprintf("fail to get server status. %s", clientError.Error()))
+			log.Printf("heartBeat %d, %s", count, string(message))
+			gm.RegisterGame(heartBeat)
+			log.Printf("Registered games: %v", gm.ListGames())
+			if count >= 10 {
+				time.Sleep(time.Duration(10) * time.Second)
+				log.Printf("Registered games: %v", gm.ListGames())
+				return
 			}
-			log.Printf("status: %v", status)
-			return
+
 		case action := <-actionChannel:
 			message, _ := json.Marshal(action)
 			log.Printf("action, %s", string(message))
 		}
 	}
+
 }
