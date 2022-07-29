@@ -19,7 +19,7 @@ func main() {
 	go apiServer.RunServer()
 
 	ga := launcher.NewLauncher(hldsGameConfig)
-	heartBeatChannel, actionChannel := ga.RunGame(*common.GetEnv("MAP"))
+	heartBeatChannel, actionChannel := ga.RunGame(*common.GetRequiredEnv("MAP"))
 	gameEventSender := getGameEventSender()
 	for {
 		select {

@@ -3,48 +3,69 @@ package main
 import (
 	"context"
 	"fmt"
+	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
+	"hlds-games/internal/config"
+	"hlds-games/internal/management/telegram"
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
 func main() {
-	//common.FakeEnvGameCfg()
-	//hldsGameConfig := config.GetHldsGameConfig()
-	//rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
-	//grpcApiConfig := config.GetGrpcApiConfig()
-	//apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
-	//go apiServer.RunServer()
-	////api.GetInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
 
-	testRabbit()
 }
 
+func tetChatRepo() {
+	repository, err := telegram.NewFileChatRepository("./data")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("chats: %v", repository.GetAll())
+	repository.AddChat(
+		telegram.Chat{Name: "chatname", Id: 1, Muted: true},
+	)
+	log.Printf("chats: %v", repository.GetAll())
+
+	repository.AddChat(
+		telegram.Chat{Name: "chatname11", Id: 11, Muted: true},
+	)
+	log.Printf("chats: %v", repository.GetAll())
+
+	repository.RemoveChat(1)
+	log.Printf("chats: %v", repository.GetAll())
+}
+func testGrpcRconCommand() {
+	common.FakeEnvGameCfg()
+	hldsGameConfig := config.GetHldsGameConfig()
+	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
+	grpcApiConfig := config.GetGrpcApiConfig()
+	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
+	go apiServer.RunServer()
+	api.GetServerInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
+
+}
 func testRabbit() {
 	common.FakeEnvRabbit("127.0.0.1")
-	go consume()
-	produce()
+	rbtCfg := config.GetRabbitConfig()
+	go consume(rbtCfg)
+	produce(rbtCfg)
 
 }
-func produce() {
+func produce(rabbitConfig *config.RabbitConfig) {
 	type message struct {
 		Num   int       `json:"num"`
 		Queue string    `json:"queue"`
 		Time  time.Time `json:"time"`
 	}
-	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
-	if err != nil {
-		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
-	}
 	producer := rabbit.NewAmqpProducer(
-		*common.GetEnv("RABBITMQ_HOST"),
-		amqpPort, *common.GetEnv("RABBITMQ_USER"),
-		*common.GetEnv("RABBITMQ_PASSWORD"),
+		rabbitConfig.RabbitHost,
+		rabbitConfig.RabbitPort,
+		rabbitConfig.RabbitUser,
+		rabbitConfig.RabbitPassword,
 		1,
 	)
 
@@ -65,15 +86,12 @@ func produce() {
 	}
 }
 
-func consume() {
-	amqpPort, err := strconv.ParseInt(*common.GetEnv("RABBITMQ_PORT"), 10, 64)
-	if err != nil {
-		log.Fatalf("Invalid RABBITMQ_PORT %s", err.Error())
-	}
+func consume(rabbitConfig *config.RabbitConfig) {
 	consumer := rabbit.NewAmqpConsumer(
-		*common.GetEnv("RABBITMQ_HOST"),
-		amqpPort, *common.GetEnv("RABBITMQ_USER"),
-		*common.GetEnv("RABBITMQ_PASSWORD"),
+		rabbitConfig.RabbitHost,
+		rabbitConfig.RabbitPort,
+		rabbitConfig.RabbitUser,
+		rabbitConfig.RabbitPassword,
 		1,
 	)
 	//time.Sleep(time.Duration(5) * time.Second)

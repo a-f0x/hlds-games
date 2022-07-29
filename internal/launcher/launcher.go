@@ -128,7 +128,7 @@ func (l *Launcher) startGame(gameMap string) {
 		command = fmt.Sprintf("./hlds_run -game valve +rcon_password %s +port %d +maxplayers 32 +map %s +logaddress 127.0.0.1 %d",
 			l.hldsGameConfig.RconPassword, l.hldsGameConfig.HldsGamePort, gameMap, l.hldsGameConfig.LogReceiverPort)
 	default:
-		log.Fatalf(fmt.Sprintf("Unknown game type: %s. Available type is %v", l.hldsGameConfig.GameType, games))
+		log.Fatalf("Unknown game type: %s. Available type is %v", l.hldsGameConfig.GameType, games)
 	}
 	go func() {
 		cmd := exec.Command("sh", "-c", command)

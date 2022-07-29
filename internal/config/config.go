@@ -18,19 +18,46 @@ type HldsGameConfig struct {
 type GrpcApiConfig struct {
 	GrpcApiPort int64
 }
+type TelegramProxyConfig struct {
+	Enabled bool
+	Url     string
+}
+type TelegramBotConfig struct {
+	Token            string
+	ReconnectTimeout int64
+	AdminPassword    string
+}
+type TelegramConfig struct {
+	Proxy *TelegramProxyConfig
+	Bot   *TelegramBotConfig
+}
 
+func GetTelegramBotConfig() *TelegramConfig {
+	return &TelegramConfig{
+		Proxy: &TelegramProxyConfig{
+			Enabled: common.GetEnvBoolValue("TELEGRAM_PROXY_ENABLED"),
+			Url:     common.GetEnv("TELEGRAM_PROXY_URL"),
+		},
+		Bot: &TelegramBotConfig{
+			Token:            common.GetRequiredEnv("TELEGRAM_BOT_TOKEN"),
+			ReconnectTimeout: common.GetEnvInt64Value("TELEGRAM_RECONNECT_TIMEOUT_SEC"),
+			AdminPassword:    common.GetRequiredEnv("TELEGRAM_ADMIN_PASSWORD"),
+		},
+	}
+
+}
 func GetRabbitConfig() *RabbitConfig {
 	return &RabbitConfig{
-		RabbitHost:     *common.GetEnv("RABBITMQ_HOST"),
+		RabbitHost:     common.GetRequiredEnv("RABBITMQ_HOST"),
 		RabbitPort:     common.GetEnvInt64Value("RABBITMQ_PORT"),
-		RabbitUser:     *common.GetEnv("RABBITMQ_USER"),
-		RabbitPassword: *common.GetEnv("RABBITMQ_PASSWORD"),
+		RabbitUser:     common.GetRequiredEnv("RABBITMQ_USER"),
+		RabbitPassword: common.GetRequiredEnv("RABBITMQ_PASSWORD"),
 	}
 }
 func GetHldsGameConfig() *HldsGameConfig {
 	return &HldsGameConfig{
-		GameType:        *common.GetEnv("GAME_TYPE"),
-		RconPassword:    *common.GetEnv("RCON_PASSWORD"),
+		GameType:        common.GetRequiredEnv("GAME_TYPE"),
+		RconPassword:    common.GetRequiredEnv("RCON_PASSWORD"),
 		HldsGamePort:    common.GetEnvInt64Value("PORT"),
 		Host:            "127.0.0.1",
 		LogReceiverPort: 27999,

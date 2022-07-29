@@ -13,22 +13,32 @@ func StringOrNil(value string) *string {
 	return &value
 }
 
-func GetEnv(key string) *string {
+func GetRequiredEnv(key string) string {
 	_, ok := os.LookupEnv(key)
 	if !ok {
 		log.Fatalf("Env %s not set\n", key)
-	} else {
-		value := os.Getenv(key)
-		return &value
 	}
-	return nil
+	value := os.Getenv(key)
+	return value
 }
-func GetEnvInt64Value(value string) int64 {
-	int64Val, err := strconv.ParseInt(*GetEnv(value), 10, 64)
+func GetEnv(key string) string {
+	return os.Getenv(key)
+}
+
+func GetEnvInt64Value(key string) int64 {
+	int64Val, err := strconv.ParseInt(GetRequiredEnv(key), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid env %s. %s", value, err.Error())
+		log.Fatalf("Invalid env %s. %s", key, err.Error())
 	}
 	return int64Val
+}
+func GetEnvBoolValue(key string) bool {
+	boolVal, err := strconv.ParseBool(os.Getenv(key))
+	if err != nil {
+		log.Printf("Invalid env %s. %s", key, err.Error())
+		return false
+	}
+	return boolVal
 }
 
 func FakeEnvRabbit(host string) {
@@ -42,5 +52,4 @@ func FakeEnvGameCfg() {
 	os.Setenv("RCON_PASSWORD", "asjop2340239857uG")
 	os.Setenv("PORT", "27017")
 	os.Setenv("GRPC_API_PORT", "2020")
-
 }

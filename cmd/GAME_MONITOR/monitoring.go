@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
@@ -13,12 +12,6 @@ import (
 )
 
 func main() {
-	//status, err := api.GetServerInfo("127.0.0.1", 8090)(context.TODO())
-	//if err != nil {
-	//	log.Fatalf(fmt.Sprintf("fail to get server status. %s"), err.Error())
-	//}
-	//log.Printf("status = %v", status)
-
 	monitoring()
 }
 func monitoring() {
@@ -33,10 +26,10 @@ func monitoring() {
 	)
 	heartBeatChannel, actionChannel, err := management.Collect(context.TODO(), client)
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("%s", err.Error()))
+		log.Fatalf("%s", err.Error())
 	}
 
-	gm := management.NewGameManager("192.168.88.61", 27017)
+	gm := management.NewGameManager("192.168.88.61")
 	count := 0
 	for {
 		select {

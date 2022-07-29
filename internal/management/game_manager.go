@@ -1,7 +1,6 @@
 package management
 
 import (
-	"fmt"
 	"hlds-games/internal/messages"
 	"sync"
 	"time"
@@ -13,7 +12,7 @@ type GameManager struct {
 	externalIp string
 }
 
-func NewGameManager(externalIp string, externalPort int64) *GameManager {
+func NewGameManager(externalIp string) *GameManager {
 	manager := &GameManager{
 		games:      make(map[string]Game),
 		externalIp: externalIp,
@@ -60,26 +59,4 @@ func (g *GameManager) ListGames() []Game {
 		games = append(games, value)
 	}
 	return games
-}
-
-type Game struct {
-	Name           string
-	GameType       string
-	GameHost       string
-	GamePort       int64
-	ApiHost        string
-	ApiPort        int64
-	ExternalIp     string
-	ExternalPort   int64
-	registeredTime int64
-}
-
-func (g Game) Key() string {
-	return fmt.Sprintf("%s%s", g.GameType, g.Name)
-}
-func (g Game) expired(diffSec int64) bool {
-	if time.Now().Unix()-g.registeredTime > diffSec {
-		return true
-	}
-	return false
 }
