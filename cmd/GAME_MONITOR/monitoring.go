@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
 	"hlds-games/internal/management"
+	"hlds-games/internal/management/telegram"
 	"log"
-	"time"
 )
 
 func main() {
@@ -16,6 +16,13 @@ func main() {
 }
 func monitoring() {
 	common.FakeEnvRabbit("127.0.0.1")
+
+	repository, err := telegram.NewFileChatRepository("./data")
+	if err != nil {
+		log.Fatal(err)
+	}
+	t := telegram.NewTelegram(config.GetTelegramBotConfig(), repository)
+	botEvents := t.Start()
 	rabbitConfig := config.GetRabbitConfig()
 	client := rabbit.NewAmqpConsumer(
 		rabbitConfig.RabbitHost,
@@ -30,25 +37,20 @@ func monitoring() {
 	}
 
 	gm := management.NewGameManager("192.168.88.61")
-	count := 0
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
-			count++
-			message, _ := json.Marshal(heartBeat)
-			log.Printf("heartBeat %d, %s", count, string(message))
 			gm.RegisterGame(heartBeat)
-			log.Printf("Registered games: %v", gm.ListGames())
-			if count >= 10 {
-				time.Sleep(time.Duration(10) * time.Second)
-				log.Printf("Registered games: %v", gm.ListGames())
-				return
-			}
-
 		case action := <-actionChannel:
-			message, _ := json.Marshal(action)
-			log.Printf("action, %s", string(message))
+			t.NotifyAll(fmt.Sprintf("action: %v", action.Payload))
+		case botEvent := <-botEvents:
+			switch action := botEvent.BotAction; action {
+			case telegram.ListServers:
+				games := gm.ListGames()
+				t.Notify(fmt.Sprintf("%v", games), botEvent.ChatId)
+			case telegram.RconCommand:
+				t.Notify("temporary not implemented...", botEvent.ChatId)
+			}
 		}
 	}
-
 }

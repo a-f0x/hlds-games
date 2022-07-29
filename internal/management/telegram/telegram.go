@@ -37,6 +37,7 @@ func NewTelegram(config *config.TelegramConfig, chatRepository ChatRepository) *
 func (t *Telegram) Start() <-chan BotEvent {
 	go func() {
 		bot := t.tryConnect()
+		t.bot = bot
 		t.selfName = bot.Self.UserName
 		log.Printf("TelegramBot %s connected\n", t.selfName)
 		u := tgbotapi.NewUpdate(0)
@@ -54,7 +55,7 @@ func (t *Telegram) Start() <-chan BotEvent {
 
 func (t *Telegram) NotifyAll(message string) {
 	for _, group := range t.chats.GetAll() {
-		if !group.Muted {
+		if group.PlayerEventsEnabled {
 			t.Notify(message, group.Id)
 		}
 	}
@@ -160,10 +161,10 @@ func (t *Telegram) onDirectMessageReceived(chatId int64, userName string, text s
 	chat := t.chats.GetChat(chatId)
 	if chat == nil {
 		chat = t.updateChat(&Chat{
-			Name:             userName,
-			Id:               chatId,
-			Muted:            true,
-			AllowExecuteRcon: false,
+			Name:                userName,
+			Id:                  chatId,
+			PlayerEventsEnabled: false,
+			AllowExecuteRcon:    false,
 		})
 	}
 	args := strings.Split(text, " ")
@@ -191,10 +192,10 @@ func (t *Telegram) onGroupMessageReceived(chatId int64, groupName string, text s
 	chat := t.chats.GetChat(chatId)
 	if chat == nil {
 		chat = t.updateChat(&Chat{
-			Name:             groupName,
-			Id:               chatId,
-			Muted:            true,
-			AllowExecuteRcon: false,
+			Name:                groupName,
+			Id:                  chatId,
+			PlayerEventsEnabled: false,
+			AllowExecuteRcon:    false,
 		})
 	}
 
@@ -209,34 +210,32 @@ func (t *Telegram) onBotCommandReceived(command string, args []string, chatId in
 
 	switch command {
 
-	case "/mute":
+	case "/player_events_off":
 		{
-			t.muteChat(chatId, true)
-			t.sendMessage("Chat muted", chatId)
+			t.allowSendPlayerEvents(chatId, false)
 			return true
 		}
-	case "/unmute":
+	case "/player_events_on":
 		{
-			t.muteChat(chatId, false)
-			t.sendMessage("Chat unmuted", chatId)
+			t.allowSendPlayerEvents(chatId, true)
 			return true
 		}
 
 	case "/info":
 		{
-			t.onAction(chatId, "status", RconCommand)
+			t.onAction(chatId, "info", ListServers)
 			return true
 		}
 	}
 	return false
 }
 
-func (t *Telegram) muteChat(chatId int64, mute bool) {
+func (t *Telegram) allowSendPlayerEvents(chatId int64, allow bool) {
 
 	chat := t.getChat(chatId)
 	if chat == nil {
 		return
 	}
-	chat.Muted = mute
+	chat.PlayerEventsEnabled = allow
 	t.updateChat(chat)
 }

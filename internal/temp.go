@@ -21,7 +21,7 @@ func main() {
 }
 
 func testTelegram() {
-	common.FakeTelegramCfg("523320550:AAGfTGu-_EIc7Se9WIe2GHHQmUYb8TEfs4E")
+	common.FakeTelegramCfg("fake_token")
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
 		log.Fatal(err)
@@ -41,12 +41,12 @@ func testChatRepo() {
 	}
 	log.Printf("chats: %v", repository.GetAll())
 	repository.SaveChat(
-		&telegram.Chat{Name: "chatnameUpdated", Id: 1, Muted: true},
+		&telegram.Chat{Name: "chatnameUpdated", Id: 1},
 	)
 	log.Printf("chats: %v", repository.GetAll())
 
 	repository.SaveChat(
-		&telegram.Chat{Name: "chatname11Updated", Id: 11, Muted: true},
+		&telegram.Chat{Name: "chatname11Updated", Id: 11},
 	)
 	log.Printf("chats: %v", repository.GetAll())
 

@@ -44,6 +44,7 @@ func (g *GameManager) RegisterGame(heartBeat messages.Message[messages.HeartBeat
 		GamePort:       heartBeat.Payload.GamePort,
 		ApiHost:        heartBeat.Payload.ApiHost,
 		ApiPort:        heartBeat.Payload.ApiPort,
+		Players:        heartBeat.Payload.Players,
 		ExternalIp:     g.externalIp,
 		ExternalPort:   heartBeat.Payload.GamePort,
 		registeredTime: heartBeat.Time,

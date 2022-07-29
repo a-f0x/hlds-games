@@ -1,16 +1,15 @@
 package telegram
 
 const (
-	ChatAdded   BotAction = 0
-	ChatRemoved BotAction = 1
-	RconCommand BotAction = 3
+	ListServers BotAction = 0
+	RconCommand BotAction = 1
 )
 
 type Chat struct {
-	Name             string `json:"name"`
-	Id               int64  `json:"id"`
-	Muted            bool   `json:"muted"`
-	AllowExecuteRcon bool   `json:"allow_execute_rcon"`
+	Name                string `json:"name"`
+	Id                  int64  `json:"id"`
+	PlayerEventsEnabled bool   `json:"player_events_enabled"`
+	AllowExecuteRcon    bool   `json:"allow_execute_rcon"`
 }
 
 type BotEvent struct {
