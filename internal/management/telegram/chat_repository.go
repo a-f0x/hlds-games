@@ -9,9 +9,8 @@ import (
 
 type ChatRepository interface {
 	GetAll() []*Chat
-	AddChat(chat Chat) error
+	SaveChat(chat *Chat) error
 	RemoveChat(chatId int64) error
-	IsChatExist(chatId int64) bool
 	GetChat(chatId int64) *Chat
 }
 
@@ -60,12 +59,21 @@ func (f *FileChatRepository) GetAll() []*Chat {
 	copy(c, f.chats)
 	return c
 }
-func (f *FileChatRepository) AddChat(chat Chat) error {
-	if f.IsChatExist(chat.Id) {
+func (f *FileChatRepository) SaveChat(chat *Chat) error {
+	i := f.getChatIndex(chat.Id)
+	if i != -1 {
+		chatsCopy := make([]*Chat, len(f.chats))
+		copy(chatsCopy, f.chats)
+		chatsCopy[i] = chat
+		err := f.flush(chatsCopy)
+		if err != nil {
+			return err
+		}
+		f.chats = chatsCopy
 		return nil
 	}
-	c := append(f.chats, &chat)
-	err := f.serializeChats(c)
+	c := append(f.chats, chat)
+	err := f.flush(c)
 	if err != nil {
 		return err
 	}
@@ -82,14 +90,16 @@ func (f *FileChatRepository) GetChat(chatId int64) *Chat {
 	return nil
 }
 
-func (f *FileChatRepository) IsChatExist(chatId int64) bool {
-	return f.GetChat(chatId) != nil
+func (f *FileChatRepository) getChatIndex(chatId int64) int {
+	for i, c := range f.chats {
+		if c.Id == chatId {
+			return i
+		}
+	}
+	return -1
 }
 
 func (f *FileChatRepository) RemoveChat(chatId int64) error {
-	if !f.IsChatExist(chatId) {
-		return nil
-	}
 	chats := make([]*Chat, 0)
 	for _, chat := range f.chats {
 		if chat.Id == chatId {
@@ -97,8 +107,7 @@ func (f *FileChatRepository) RemoveChat(chatId int64) error {
 		}
 		chats = append(chats, chat)
 	}
-	f.chats = chats
-	err := f.serializeChats(chats)
+	err := f.flush(chats)
 	if err != nil {
 		return err
 	}
@@ -106,7 +115,7 @@ func (f *FileChatRepository) RemoveChat(chatId int64) error {
 	return nil
 }
 
-func (f *FileChatRepository) serializeChats(chats []*Chat) error {
+func (f *FileChatRepository) flush(chats []*Chat) error {
 	bytes, _ := json.MarshalIndent(chats, "", " ")
 	_ = ioutil.WriteFile(f.filePath, bytes, 0644)
 	return nil

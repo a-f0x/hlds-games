@@ -16,22 +16,37 @@ import (
 )
 
 func main() {
+	testTelegram()
 
 }
 
-func tetChatRepo() {
+func testTelegram() {
+	common.FakeTelegramCfg("523320550:AAGfTGu-_EIc7Se9WIe2GHHQmUYb8TEfs4E")
+	repository, err := telegram.NewFileChatRepository("./data")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ch := telegram.NewTelegram(config.GetTelegramBotConfig(), repository).Start()
+	for {
+		e := <-ch
+		fmt.Printf("message: %v", e)
+	}
+
+}
+
+func testChatRepo() {
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("chats: %v", repository.GetAll())
-	repository.AddChat(
-		telegram.Chat{Name: "chatname", Id: 1, Muted: true},
+	repository.SaveChat(
+		&telegram.Chat{Name: "chatnameUpdated", Id: 1, Muted: true},
 	)
 	log.Printf("chats: %v", repository.GetAll())
 
-	repository.AddChat(
-		telegram.Chat{Name: "chatname11", Id: 11, Muted: true},
+	repository.SaveChat(
+		&telegram.Chat{Name: "chatname11Updated", Id: 11, Muted: true},
 	)
 	log.Printf("chats: %v", repository.GetAll())
 
