@@ -163,7 +163,7 @@ func (t *Telegram) onDirectMessageReceived(chatId int64, userName string, text s
 			Name:             userName,
 			Id:               chatId,
 			Muted:            true,
-			AllowExecuteRcon: true,
+			AllowExecuteRcon: false,
 		})
 	}
 	args := strings.Split(text, " ")
@@ -194,7 +194,7 @@ func (t *Telegram) onGroupMessageReceived(chatId int64, groupName string, text s
 			Name:             groupName,
 			Id:               chatId,
 			Muted:            true,
-			AllowExecuteRcon: true,
+			AllowExecuteRcon: false,
 		})
 	}
 
