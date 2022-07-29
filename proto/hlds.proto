@@ -10,7 +10,6 @@ import "hlds_messages.proto";
 
 
 service HalfLifeDedicatedServer{
-  rpc GetServerStatus(ru.ton618.hlds.model.v1.GetGameStatusRequest) returns (ru.ton618.hlds.model.v1.GameStatus);
 
   rpc ExecuteRconCommand(ru.ton618.hlds.model.v1.RconCommand) returns (ru.ton618.hlds.model.v1.RconCommandResult);
 }

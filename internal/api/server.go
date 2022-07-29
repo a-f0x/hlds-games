@@ -11,14 +11,12 @@ import (
 )
 
 type HLDSApiServer struct {
-	gameType      string
 	grpcApiConfig *config.GrpcApiConfig
 	rcon          *rcon.Rcon
 }
 
-func NewHLDSApiServer(gameType string, grpcApiConfig *config.GrpcApiConfig, rcon *rcon.Rcon) *HLDSApiServer {
+func NewHLDSApiServer(grpcApiConfig *config.GrpcApiConfig, rcon *rcon.Rcon) *HLDSApiServer {
 	server := &HLDSApiServer{
-		gameType:      gameType,
 		grpcApiConfig: grpcApiConfig,
 		rcon:          rcon,
 	}
@@ -40,19 +38,6 @@ func (h *HLDSApiServer) RunServer() {
 		log.Fatalf("fail to start server %v", grpcServerError)
 	}
 
-}
-
-func (h *HLDSApiServer) GetServerStatus(ctx context.Context, request *GetGameStatusRequest) (*GameStatus, error) {
-	result, rconError := h.rcon.GetServerStatus()
-	if rconError != nil {
-		return nil, rconError
-	}
-	return &GameStatus{
-		Game:    h.gameType,
-		Name:    result.Name,
-		Map:     result.Map,
-		Players: result.Players,
-	}, nil
 }
 
 func (h *HLDSApiServer) ExecuteRconCommand(ctx context.Context, request *RconCommand) (*RconCommandResult, error) {

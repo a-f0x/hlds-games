@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"hlds-games/internal/config"
 	"log"
@@ -73,7 +72,7 @@ func (t *Telegram) tryConnect() *tgbotapi.BotAPI {
 			<-ticker.C
 			b, err := tgbotapi.NewBotAPIWithClient(t.config.Bot.Token, tgbotapi.APIEndpoint, &http.Client{})
 			if err != nil {
-				log.Printf("Error connect to  telegram bot api: %s\nTry reconnect after %d sec...", err, t.config.Bot.ReconnectTimeout)
+				log.Printf("Error connect to telegram bot api: %s\nTry reconnect after %d sec...", err, t.config.Bot.ReconnectTimeout)
 				continue
 			}
 			ticker.Stop()
@@ -101,10 +100,9 @@ func (t *Telegram) sendMessage(message string, chatId int64) {
 		if ok {
 			if te.Code == 403 || te.Code == 400 {
 				t.removeChat(chatId)
-
 			}
 		}
-		log.Println(fmt.Errorf("Error send message : %s \n", e))
+		log.Printf("Error send message : %s \n", e)
 	}
 }
 
@@ -207,31 +205,21 @@ func (t *Telegram) onGroupMessageReceived(chatId int64, groupName string, text s
 }
 
 func (t *Telegram) onBotCommandReceived(command string, args []string, chatId int64) bool {
-
 	switch command {
-
 	case "/player_events_off":
-		{
-			t.allowSendPlayerEvents(chatId, false)
-			return true
-		}
+		t.allowSendPlayerEvents(chatId, false)
+		return true
 	case "/player_events_on":
-		{
-			t.allowSendPlayerEvents(chatId, true)
-			return true
-		}
-
+		t.allowSendPlayerEvents(chatId, true)
+		return true
 	case "/info":
-		{
-			t.onAction(chatId, "info", ListServers)
-			return true
-		}
+		t.onAction(chatId, "", ListServers)
+		return true
 	}
 	return false
 }
 
 func (t *Telegram) allowSendPlayerEvents(chatId int64, allow bool) {
-
 	chat := t.getChat(chatId)
 	if chat == nil {
 		return

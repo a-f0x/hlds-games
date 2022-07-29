@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	testTelegram()
+	//testTelegram()
 
 }
 
@@ -58,9 +58,14 @@ func testGrpcRconCommand() {
 	hldsGameConfig := config.GetHldsGameConfig()
 	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
 	grpcApiConfig := config.GetGrpcApiConfig()
-	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
+	apiServer := api.NewHLDSApiServer(grpcApiConfig, rc)
 	go apiServer.RunServer()
-	api.GetServerInfo("127.0.0.1", grpcApiConfig.GrpcApiPort)
+	command := "status"
+	result, err := api.ExecuteRconCommand("127.0.0.1", grpcApiConfig.GrpcApiPort)(context.TODO(), "status")
+	if err != nil {
+		log.Fatalf("fail to execute command %s. %s", command, err.Error())
+	}
+	log.Printf("status: %s", result.Result)
 
 }
 func testRabbit() {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"hlds-games/internal/common"
@@ -41,13 +42,29 @@ func monitoring() {
 		select {
 		case heartBeat := <-heartBeatChannel:
 			gm.RegisterGame(heartBeat)
-		case action := <-actionChannel:
-			t.NotifyAll(fmt.Sprintf("action: %v", action.Payload))
+		case actionEvent := <-actionChannel:
+
+			switch action := actionEvent.Payload.ActionType; action {
+			case "player_connected":
+				message := fmt.Sprintf("%s: %s connected", actionEvent.ServerInfo.GameName, actionEvent.Payload.Player.NickName)
+				t.NotifyAll(message)
+			case "player_disconnected":
+				message := fmt.Sprintf("%s: %s disconnected", actionEvent.ServerInfo.GameName, actionEvent.Payload.Player.NickName)
+				t.NotifyAll(message)
+			}
 		case botEvent := <-botEvents:
 			switch action := botEvent.BotAction; action {
 			case telegram.ListServers:
 				games := gm.ListGames()
-				t.Notify(fmt.Sprintf("%v", games), botEvent.ChatId)
+				gl := len(games)
+				var buffer bytes.Buffer
+				for i, game := range games {
+					buffer.WriteString(game.String())
+					if i < gl-1 {
+						buffer.WriteString("\n")
+					}
+				}
+				t.Notify(buffer.String(), botEvent.ChatId)
 			case telegram.RconCommand:
 				t.Notify("temporary not implemented...", botEvent.ChatId)
 			}

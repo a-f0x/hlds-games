@@ -13,6 +13,7 @@ type Game struct {
 	ApiHost        string
 	ApiPort        int64
 	Players        int32
+	Map            string
 	ExternalIp     string
 	ExternalPort   int64
 	registeredTime int64
@@ -36,6 +37,6 @@ func (g Game) getApiUrl() string {
 }
 
 func (g Game) String() string {
-	return fmt.Sprintf("GameType:	%s\n Name:	%s\n Players:	%d\n ip:	%s\n", g.GameType, g.Name, g.Players, g.getExternalUrl())
+	return fmt.Sprintf("GameType: %s\nName: %s\nMap: %s\nPlayers: %d\nip: %s\n", g.GameType, g.Name, g.Map, g.Players, g.getExternalUrl())
 
 }

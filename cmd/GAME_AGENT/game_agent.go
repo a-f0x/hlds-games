@@ -15,11 +15,11 @@ func main() {
 	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
 
 	grpcApiConfig := config.GetGrpcApiConfig()
-	apiServer := api.NewHLDSApiServer(hldsGameConfig.GameType, grpcApiConfig, rc)
+	apiServer := api.NewHLDSApiServer(grpcApiConfig, rc)
 	go apiServer.RunServer()
 
 	ga := launcher.NewLauncher(hldsGameConfig)
-	heartBeatChannel, actionChannel := ga.RunGame(*common.GetRequiredEnv("MAP"))
+	heartBeatChannel, actionChannel := ga.RunGame(common.GetRequiredEnv("MAP"))
 	gameEventSender := getGameEventSender()
 	for {
 		select {
