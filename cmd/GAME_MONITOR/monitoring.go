@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"hlds-games/internal/common"
@@ -17,7 +16,7 @@ func main() {
 }
 func monitoring() {
 	common.FakeEnvRabbit("127.0.0.1")
-
+	common.FakeTelegramCfg("523320550:AAFySljvtdJ3vSdVSXg4SLBM5xiBLOANHHY")
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
 		log.Fatal(err)
@@ -56,15 +55,7 @@ func monitoring() {
 			switch action := botEvent.BotAction; action {
 			case telegram.ListServers:
 				games := gm.ListGames()
-				gl := len(games)
-				var buffer bytes.Buffer
-				for i, game := range games {
-					buffer.WriteString(game.String())
-					if i < gl-1 {
-						buffer.WriteString("\n")
-					}
-				}
-				t.Notify(buffer.String(), botEvent.ChatId)
+				t.SendGameList(games, botEvent.ChatId)
 			case telegram.RconCommand:
 				t.Notify("temporary not implemented...", botEvent.ChatId)
 			}

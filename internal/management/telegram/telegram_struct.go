@@ -18,3 +18,14 @@ type BotEvent struct {
 	Message   string
 }
 type BotAction uint32
+
+type GameButtonType string
+
+const (
+	Rcon GameButtonType = "rcon"
+)
+
+type GameButton struct {
+	Type GameButtonType `json:"type"`
+	Key  string         `json:"key"`
+}

@@ -1,6 +1,7 @@
 package management
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 )
@@ -37,6 +38,18 @@ func (g Game) getApiUrl() string {
 }
 
 func (g Game) String() string {
-	return fmt.Sprintf("GameType: %s\nName: %s\nMap: %s\nPlayers: %d\nip: %s\n", g.GameType, g.Name, g.Map, g.Players, g.getExternalUrl())
+	return fmt.Sprintf("GameType: %s\nName: %s\nMap: %s\nPlayers: %d\nIp: %s\n", g.GameType, g.Name, g.Map, g.Players, g.getExternalUrl())
 
+}
+
+func BuildGamesText(games []Game) string {
+	gl := len(games)
+	var buffer bytes.Buffer
+	for i, game := range games {
+		buffer.WriteString(game.String())
+		if i < gl-1 {
+			buffer.WriteString("\n")
+		}
+	}
+	return buffer.String()
 }
