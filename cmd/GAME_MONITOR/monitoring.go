@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
@@ -57,7 +58,22 @@ func monitoring() {
 				games := gm.ListGames()
 				t.SendGameList(games, botEvent.ChatId)
 			case telegram.RconCommand:
-				t.Notify("temporary not implemented...", botEvent.ChatId)
+				address := botEvent.Rcon.ServerAddress
+				command := botEvent.Rcon.Command
+				chatId := botEvent.ChatId
+				messageId := botEvent.Rcon.MessageId
+				game := gm.GetGame(address)
+				if game == nil {
+					t.Reply("Server is offline", chatId, messageId)
+					continue
+				}
+				result, rconError := api.ExecuteRconCommand(address)(context.TODO(), command)
+				if rconError != nil {
+					log.Printf("fail to send rcon command '%s' to address '%s', Error: %s ", command, address, rconError.Error())
+					t.Reply(fmt.Sprintf("%s:\nError send command. Try again later", game.Name), chatId, messageId)
+					continue
+				}
+				t.Reply(fmt.Sprintf("%s:\n%s", game.Name, result.Result), chatId, messageId)
 			}
 		}
 	}

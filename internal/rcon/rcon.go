@@ -2,7 +2,6 @@ package rcon
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -50,7 +49,8 @@ func (client *Rcon) SendRconCommand(command string) (*string, error) {
 
 	result := string(response[5:])
 	if len(result) <= 2 {
-		return nil, errors.New(fmt.Sprintf("Invalid rcon command: %s", command))
+		invalidCommand := fmt.Sprintf("Invalid rcon command: %s", command)
+		return &invalidCommand, nil
 	}
 	return &result, nil
 }

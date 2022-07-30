@@ -2,15 +2,13 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func ExecuteRconCommand(host string, port int64) func(ctx context.Context, command string) (*RconCommandResult, error) {
-	url := fmt.Sprintf("%s:%d", host, port)
+func ExecuteRconCommand(address string) func(ctx context.Context, command string) (*RconCommandResult, error) {
 	return func(ctx context.Context, command string) (*RconCommandResult, error) {
-		conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, err
 		}

@@ -16,19 +16,19 @@ import (
 var (
 	listServersCommand = tgbotapi.BotCommand{
 		Command:     "/list",
-		Description: "List servers info",
+		Description: "Show server list.",
 	}
 	playerEventsOnCommand = tgbotapi.BotCommand{
 		Command:     "/player_events_on",
-		Description: "Send player events",
+		Description: "Send player events.",
 	}
 	playerEventsOffCommand = tgbotapi.BotCommand{
 		Command:     "/player_events_off",
-		Description: "Do not send player events",
+		Description: "Do not send player events.",
 	}
 	authCommand = tgbotapi.BotCommand{
 		Command:     "/auth",
-		Description: "Authorization for execute rcon command",
+		Description: "Authorization for execute RCON commands. Only direct message.",
 	}
 )
 
@@ -80,7 +80,7 @@ func (t *Telegram) NotifyAll(message string) {
 		}
 	}
 }
-func (t *Telegram) SendGameList(games []management.Game, chatId int64) {
+func (t *Telegram) SendGameList(games []*management.Game, chatId int64) {
 	chat := t.getChat(chatId)
 	if len(games) == 0 {
 		t.sendText("No servers online", chatId)
@@ -95,6 +95,11 @@ func (t *Telegram) SendGameList(games []management.Game, chatId int64) {
 
 func (t *Telegram) Notify(message string, chatId int64) {
 	t.sendText(message, chatId)
+}
+func (t *Telegram) Reply(message string, chatId int64, messageId int) {
+	msg := tgbotapi.NewMessage(chatId, message)
+	msg.ReplyToMessageID = messageId
+	t.sendMessage(msg)
 }
 
 func (t *Telegram) tryConnect() *tgbotapi.BotAPI {
@@ -186,11 +191,9 @@ func (t *Telegram) onUpdateReceived(update tgbotapi.Update) {
 		t.onGroupMessageReceived(update)
 		return
 	}
-
 	if update.CallbackData() != "" {
 		t.onCallback(update)
 	}
-
 }
 
 func (t *Telegram) onDirectMessageReceived(update tgbotapi.Update) {
@@ -205,14 +208,28 @@ func (t *Telegram) onDirectMessageReceived(update tgbotapi.Update) {
 	if t.onBotCommandReceived(strings.Join(args[:1], ""), args[1:], chatId, true) {
 		return
 	}
-	if t.config.Bot.AdminPassword != text {
-		return
+	if chat.CurrentRconAddress != "" && !chat.AllowExecuteRcon {
+		chat.CurrentRconAddress = ""
+		t.updateChat(chat)
 	}
-	chat.AllowExecuteRcon = true
-	t.updateChat(chat)
-	t.sendText("You are added as the administrator. Write me a command and I will execute it on the server.\n"+
-		"See list of commands http://cs1-6cfg.blogspot.com/p/cs-16-client-and-console-commands.html", chatId)
-	t.onAction(chatId, ListServers)
+	if !chat.AllowExecuteRcon && t.config.Bot.AdminPassword == text {
+		chat.AllowExecuteRcon = true
+		t.updateChat(chat)
+		t.sendText("You are added as the administrator. Write me a command and I will execute it on the server.\n"+
+			"See list of commands http://cs1-6cfg.blogspot.com/p/cs-16-client-and-console-commands.html", chatId)
+		t.onAction(chatId, ListServers)
+	}
+	if chat.AllowExecuteRcon && chat.CurrentRconAddress != "" {
+		t.BotEvent <- BotEvent{
+			ChatId:    chatId,
+			BotAction: RconCommand,
+			Rcon: &ExecuteRcon{
+				ServerAddress: chat.CurrentRconAddress,
+				Command:       text,
+				MessageId:     update.Message.MessageID,
+			},
+		}
+	}
 }
 
 func (t *Telegram) onGroupMessageReceived(update tgbotapi.Update) {
@@ -265,23 +282,20 @@ func (t *Telegram) onCallback(update tgbotapi.Update) {
 	cd := update.CallbackData()
 	cq := update.CallbackQuery
 	chatId := cq.Message.Chat.ID
-	log.Printf("cd = %v\ncq = %v", cd, cq)
 	t.hideMarkup(chatId, cq.Message.MessageID)
-	if cd != "" {
-		data := &CallbackData{}
-		err := json.Unmarshal([]byte(cd), data)
-		if err != nil {
-			log.Printf("Error parse callback: %s. %s", cd, err.Error())
-			t.sendText(fmt.Sprintf("Internal error. %s", err.Error()), chatId)
-			return
-		}
-		switch data.Type {
-		case Rcon:
-			t.BotEvent <- BotEvent{
-				ChatId:    chatId,
-				BotAction: RconCommand,
-			}
-		}
+	t.sendText("Enter rcon command", chatId)
+	data := &CallbackData{}
+	err := json.Unmarshal([]byte(cd), data)
+	if err != nil {
+		log.Printf("Error parse callback: %s. %s", cd, err.Error())
+		t.sendText(fmt.Sprintf("Internal error. %s", err.Error()), chatId)
+		return
+	}
+	switch data.Type {
+	case Rcon:
+		chat := t.getChat(chatId)
+		chat.CurrentRconAddress = data.Data
+		t.updateChat(chat)
 	}
 }
 

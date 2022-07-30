@@ -82,7 +82,7 @@ func testGrpcRconCommand() {
 	apiServer := api.NewHLDSApiServer(grpcApiConfig, rc)
 	go apiServer.RunServer()
 	command := "status"
-	result, err := api.ExecuteRconCommand("127.0.0.1", grpcApiConfig.GrpcApiPort)(context.TODO(), "status")
+	result, err := api.ExecuteRconCommand(fmt.Sprintf("127.0.0.1:%d", grpcApiConfig.GrpcApiPort))(context.TODO(), "status")
 	if err != nil {
 		log.Fatalf("fail to execute command %s. %s", command, err.Error())
 	}

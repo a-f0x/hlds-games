@@ -7,14 +7,14 @@ import (
 )
 
 type GameManager struct {
-	games      map[string]Game
+	games      map[string]*Game
 	mu         sync.Mutex
 	externalIp string
 }
 
 func NewGameManager(externalIp string) *GameManager {
 	manager := &GameManager{
-		games:      make(map[string]Game),
+		games:      make(map[string]*Game),
 		externalIp: externalIp,
 	}
 	go func() {
@@ -50,15 +50,26 @@ func (g *GameManager) RegisterGame(heartBeat messages.Message[messages.HeartBeat
 		ExternalPort:   heartBeat.Payload.GamePort,
 		registeredTime: heartBeat.Time,
 	}
-	g.games[game.Key()] = game
+	g.games[game.Key()] = &game
 }
 
-func (g *GameManager) ListGames() []Game {
+func (g *GameManager) ListGames() []*Game {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	games := make([]Game, 0, len(g.games))
+	games := make([]*Game, 0, len(g.games))
 	for _, value := range g.games {
 		games = append(games, value)
 	}
 	return games
+}
+func (g *GameManager) GetGame(apiUrl string) *Game {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	game := g.games[apiUrl]
+	if game == nil {
+		return nil
+	}
+	return &Game{
+		Name: game.Name,
+	}
 }

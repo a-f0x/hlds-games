@@ -21,7 +21,7 @@ type Game struct {
 }
 
 func (g Game) Key() string {
-	return fmt.Sprintf("%s%d", g.GameHost, g.GamePort)
+	return g.GetApiUrl()
 }
 func (g Game) expired(diffSec int64) bool {
 	if time.Now().Unix()-g.registeredTime > diffSec {
@@ -41,7 +41,7 @@ func (g Game) String() string {
 	return fmt.Sprintf("GameType: %s\nName: %s\nMap: %s\nPlayers: %d\nIp: %s\n", g.GameType, g.Name, g.Map, g.Players, g.GetExternalUrl())
 }
 
-func BuildGamesText(games []Game) string {
+func BuildGamesText(games []*Game) string {
 	gl := len(games)
 	var buffer bytes.Buffer
 	for i, game := range games {

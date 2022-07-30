@@ -8,14 +8,14 @@ import (
 	"html"
 )
 
-func NewRconCallbackData(g management.Game) CallbackData {
+func NewRconCallbackData(g *management.Game) CallbackData {
 	return CallbackData{
 		Type: Rcon,
 		Data: g.GetApiUrl(),
 	}
 }
 
-func BuildMessagesWithRconConsole(games []management.Game, chatId int64) tgbotapi.MessageConfig {
+func BuildMessagesWithRconConsole(games []*management.Game, chatId int64) tgbotapi.MessageConfig {
 	rows := make([][]tgbotapi.InlineKeyboardButton, len(games))
 	for i, game := range games {
 		button := NewRconCallbackData(game)
