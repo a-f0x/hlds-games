@@ -10,12 +10,33 @@ import (
 	"hlds-games/internal/management/telegram"
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
+	"html"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
 func main() {
+	xx := "\\U0001F4E1"
+	//U+1F4BB	\xF0\x9F\x92\xBB	personal computer
+	//U+1F4DF	\xF0\x9F\x93\x9F	pager
+	//U+1F4E1	\xF0\x9F\x93\xA1	satellite antenna
+
+	// Hex String
+	h := strings.ReplaceAll(xx, "\\U", "0x")
+	fmt.Println(h)
+	// Hex to Int
+	i, _ := strconv.ParseInt(h, 0, 64)
+	fmt.Println(i)
+	// Unescape the string (HTML Entity -> String).
+	str := html.UnescapeString(string(i))
+
+	//128187
+
+	// Display the emoji.
+	fmt.Println(str)
 	//testTelegram()
 
 }

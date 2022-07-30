@@ -10,7 +10,7 @@ import (
 type ChatRepository interface {
 	GetAll() []*Chat
 	SaveChat(chat *Chat) error
-	RemoveChat(chatId int64) error
+	RemoveChat(chatId int64) (*Chat, error)
 	GetChat(chatId int64) *Chat
 }
 
@@ -99,20 +99,22 @@ func (f *FileChatRepository) getChatIndex(chatId int64) int {
 	return -1
 }
 
-func (f *FileChatRepository) RemoveChat(chatId int64) error {
+func (f *FileChatRepository) RemoveChat(chatId int64) (*Chat, error) {
+	var c *Chat
 	chats := make([]*Chat, 0)
 	for _, chat := range f.chats {
 		if chat.Id == chatId {
+			c = chat
 			continue
 		}
 		chats = append(chats, chat)
 	}
 	err := f.flush(chats)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	f.chats = chats
-	return nil
+	return c, nil
 }
 
 func (f *FileChatRepository) flush(chats []*Chat) error {

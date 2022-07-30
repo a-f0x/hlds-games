@@ -16,7 +16,7 @@ func main() {
 }
 func monitoring() {
 	common.FakeEnvRabbit("127.0.0.1")
-	common.FakeTelegramCfg("523320550:AAFySljvtdJ3vSdVSXg4SLBM5xiBLOANHHY")
+	common.FakeTelegramCfg("5424757267:AAEfIfjXElS5Svf9bp1TVz4HpqRNWorA9BA")
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
 		log.Fatal(err)

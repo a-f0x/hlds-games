@@ -26,6 +26,10 @@ var (
 		Command:     "/player_events_off",
 		Description: "Do not send player events",
 	}
+	authCommand = tgbotapi.BotCommand{
+		Command:     "/auth",
+		Description: "Authorization for execute rcon command",
+	}
 )
 
 type Telegram struct {
@@ -57,16 +61,12 @@ func (t *Telegram) Start() <-chan BotEvent {
 		t.bot = bot
 		t.selfName = bot.Self.UserName
 		log.Printf("TelegramBot %s connected\n", t.selfName)
-		cfg := tgbotapi.NewSetMyCommands(listServersCommand, playerEventsOnCommand, playerEventsOffCommand)
+		cfg := tgbotapi.NewSetMyCommands(listServersCommand, playerEventsOnCommand, playerEventsOffCommand, authCommand)
 		_, _ = bot.Request(cfg)
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 30
 		updates := bot.GetUpdatesChan(u)
 		for update := range updates {
-			log.Printf("update %v", update)
-			if update.Message == nil { // ignore any non-Message Updates
-				continue
-			}
 			t.onUpdateReceived(update)
 		}
 	}()
@@ -87,38 +87,10 @@ func (t *Telegram) SendGameList(games []management.Game, chatId int64) {
 		return
 	}
 	if chat.AllowExecuteRcon {
-		t.sendMessage(buildMessagesWithConsole(games, chatId))
-
+		t.sendMessage(BuildMessagesWithRconConsole(games, chatId))
+		return
 	}
-}
-
-func buildMessagesWithConsole(games []management.Game, chatId int64) tgbotapi.MessageConfig {
-	//btns := make([]tgbotapi.InlineKeyboardButton, len(games))
-	//for i, game := range games {
-	//	button := GameButton{Rcon, game.Key()}
-	//	jsonButton, _ := json.Marshal(button)
-	//	btns[i] = tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("rcon %s", game.Name), string(jsonButton))
-	//}
-	//row := tgbotapi.NewInlineKeyboardRow(btns...  )
-	//numericKeyboard := tgbotapi.NewInlineKeyboardMarkup(row)
-	//msg := tgbotapi.NewMessage(chatId, management.BuildGamesText(games))
-	//msg.ReplyMarkup = numericKeyboard
-	//return msg
-
-	game := games[0]
-	button := GameButton{
-		Rcon,
-		game.Key(),
-	}
-	jsonButton, _ := json.Marshal(button)
-	row := tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("rcon %s", game.Name), string(jsonButton)),
-	)
-	numericKeyboard :=
-		tgbotapi.NewInlineKeyboardMarkup(row)
-	msg := tgbotapi.NewMessage(chatId, management.BuildGamesText(games))
-	msg.ReplyMarkup = numericKeyboard
-	return msg
+	t.sendText(management.BuildGamesText(games), chatId)
 }
 
 func (t *Telegram) Notify(message string, chatId int64) {
@@ -144,11 +116,10 @@ func (t *Telegram) tryConnect() *tgbotapi.BotAPI {
 	return b
 }
 
-func (t *Telegram) onAction(chatId int64, message string, action BotAction) {
+func (t *Telegram) onAction(chatId int64, action BotAction) {
 	t.BotEvent <- BotEvent{
 		ChatId:    chatId,
 		BotAction: action,
-		Message:   message,
 	}
 }
 
@@ -159,7 +130,7 @@ func (t *Telegram) sendText(message string, chatId int64) {
 func (t *Telegram) sendMessage(messageConfig tgbotapi.MessageConfig) {
 	_, e := t.bot.Send(messageConfig)
 	if e != nil {
-		te, ok := e.(tgbotapi.Error)
+		te, ok := e.(*tgbotapi.Error)
 		if ok {
 			if te.Code == 403 || te.Code == 400 {
 				t.removeChat(messageConfig.ChatID)
@@ -169,16 +140,19 @@ func (t *Telegram) sendMessage(messageConfig tgbotapi.MessageConfig) {
 	}
 }
 
-func (t *Telegram) createChat(chatName string, chatId int64, muted bool, allowRcon bool) *Chat {
+func (t *Telegram) createChat(chatName string, chatId int64, chatType ChatType) *Chat {
 	c := &Chat{
-		chatName,
-		chatId,
-		muted,
-		allowRcon}
+		Name:                chatName,
+		ChatType:            chatType,
+		Id:                  chatId,
+		PlayerEventsEnabled: false,
+		AllowExecuteRcon:    false,
+	}
 	err := t.chats.SaveChat(c)
 	if err != nil {
 		log.Fatalf("fail to add chat. %s", err.Error())
 	}
+	log.Printf("chat %s created", c.String())
 	return c
 }
 
@@ -191,10 +165,12 @@ func (t *Telegram) updateChat(chat *Chat) *Chat {
 }
 
 func (t *Telegram) removeChat(chatId int64) {
-	err := t.chats.RemoveChat(chatId)
+	chat, err := t.chats.RemoveChat(chatId)
 	if err != nil {
 		log.Fatalf("fail to remove chat. %s", err.Error())
 	}
+	log.Printf("chat %s removed", chat.String())
+
 }
 
 func (t *Telegram) getChat(chatId int64) *Chat {
@@ -202,63 +178,59 @@ func (t *Telegram) getChat(chatId int64) *Chat {
 }
 
 func (t *Telegram) onUpdateReceived(update tgbotapi.Update) {
-	chatId := update.Message.Chat.ID
-	groupName := update.Message.Chat.Title
-	userName := update.Message.From.UserName
-	text := update.Message.Text
-	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup" {
-		t.onDirectMessageReceived(chatId, userName, text)
+	if update.Message != nil {
+		if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup" {
+			t.onDirectMessageReceived(update)
+			return
+		}
+		t.onGroupMessageReceived(update)
 		return
 	}
-	t.onGroupMessageReceived(chatId, groupName, text)
+
+	if update.CallbackData() != "" {
+		t.onCallback(update)
+	}
+
 }
 
-func (t *Telegram) onDirectMessageReceived(chatId int64, userName string, text string) {
-	chat := t.chats.GetChat(chatId)
+func (t *Telegram) onDirectMessageReceived(update tgbotapi.Update) {
+	chatId := update.Message.Chat.ID
+	userName := update.Message.From.UserName
+	text := update.Message.Text
+	chat := t.getChat(chatId)
 	if chat == nil {
-		chat = t.updateChat(&Chat{
-			Name:                userName,
-			Id:                  chatId,
-			PlayerEventsEnabled: false,
-			AllowExecuteRcon:    false,
-		})
+		chat = t.createChat(userName, chatId, DirectChat)
 	}
 	args := strings.Split(text, " ")
-	if t.onBotCommandReceived(strings.Join(args[:1], ""), args[1:], chatId) {
-		return
-	}
-	if chat.AllowExecuteRcon {
-		t.onAction(chatId, text, RconCommand)
+	if t.onBotCommandReceived(strings.Join(args[:1], ""), args[1:], chatId, true) {
 		return
 	}
 	if t.config.Bot.AdminPassword != text {
-		t.sendText("Please enter the password", chatId)
 		return
 	}
 	chat.AllowExecuteRcon = true
 	t.updateChat(chat)
 	t.sendText("You are added as the administrator. Write me a command and I will execute it on the server.\n"+
 		"See list of commands http://cs1-6cfg.blogspot.com/p/cs-16-client-and-console-commands.html", chatId)
+	t.onAction(chatId, ListServers)
 }
 
-func (t *Telegram) onGroupMessageReceived(chatId int64, groupName string, text string) {
-	chat := t.chats.GetChat(chatId)
+func (t *Telegram) onGroupMessageReceived(update tgbotapi.Update) {
+	chatId := update.Message.Chat.ID
+	groupName := update.Message.Chat.Title
+	text := update.Message.Text
+	chat := t.getChat(chatId)
 	if chat == nil {
-		chat = t.updateChat(&Chat{
-			Name:                groupName,
-			Id:                  chatId,
-			PlayerEventsEnabled: false,
-			AllowExecuteRcon:    false,
-		})
+		chat = t.createChat(groupName, chatId, GroupChat)
 	}
 	if !strings.Contains(text, t.selfName) {
 		return
 	}
 	args := strings.Split(text, "@"+t.selfName)
-	t.onBotCommandReceived(strings.Join(args[:1], ""), strings.Fields(strings.Join(args[1:], " ")), chatId)
+	t.onBotCommandReceived(strings.Join(args[:1], ""), strings.Fields(strings.Join(args[1:], " ")), chatId, false)
 }
 
-func (t *Telegram) onBotCommandReceived(command string, args []string, chatId int64) bool {
+func (t *Telegram) onBotCommandReceived(command string, args []string, chatId int64, direct bool) bool {
 	switch command {
 	case playerEventsOffCommand.Command:
 		t.allowSendPlayerEvents(chatId, false)
@@ -267,10 +239,50 @@ func (t *Telegram) onBotCommandReceived(command string, args []string, chatId in
 		t.allowSendPlayerEvents(chatId, true)
 		return true
 	case listServersCommand.Command:
-		t.onAction(chatId, "", ListServers)
+		t.onAction(chatId, ListServers)
+		return true
+	case authCommand.Command:
+		if !direct {
+			return false
+		}
+		t.auth(chatId)
 		return true
 	}
 	return false
+}
+func (t *Telegram) auth(chatId int64) {
+	chat := t.getChat(chatId)
+	if chat.AllowExecuteRcon {
+		t.sendText("Already authorized", chatId)
+		return
+	}
+	t.sendText("Please enter the password", chatId)
+
+}
+
+//Attention! Update.Message is nil!
+func (t *Telegram) onCallback(update tgbotapi.Update) {
+	cd := update.CallbackData()
+	cq := update.CallbackQuery
+	chatId := cq.Message.Chat.ID
+	log.Printf("cd = %v\ncq = %v", cd, cq)
+	t.hideMarkup(chatId, cq.Message.MessageID)
+	if cd != "" {
+		data := &CallbackData{}
+		err := json.Unmarshal([]byte(cd), data)
+		if err != nil {
+			log.Printf("Error parse callback: %s. %s", cd, err.Error())
+			t.sendText(fmt.Sprintf("Internal error. %s", err.Error()), chatId)
+			return
+		}
+		switch data.Type {
+		case Rcon:
+			t.BotEvent <- BotEvent{
+				ChatId:    chatId,
+				BotAction: RconCommand,
+			}
+		}
+	}
 }
 
 func (t *Telegram) allowSendPlayerEvents(chatId int64, allow bool) {
@@ -280,4 +292,20 @@ func (t *Telegram) allowSendPlayerEvents(chatId int64, allow bool) {
 	}
 	chat.PlayerEventsEnabled = allow
 	t.updateChat(chat)
+}
+
+func (t *Telegram) hideMarkup(chatId int64, messageId int) {
+	emptyMarkUp := tgbotapi.NewEditMessageReplyMarkup(
+		chatId,
+		messageId,
+		tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("", "hide"),
+			),
+		),
+	)
+	_, err := t.bot.Send(emptyMarkUp)
+	if err != nil {
+		log.Printf("Error send message : %s \n", err)
+	}
 }
