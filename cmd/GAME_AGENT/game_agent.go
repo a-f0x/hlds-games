@@ -1,16 +1,17 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
 	"hlds-games/internal/launcher"
 	"hlds-games/internal/rcon"
-	"log"
 )
 
 func main() {
+	log.SetFormatter(&log.JSONFormatter{})
 	hldsGameConfig := config.GetHldsGameConfig()
 	rc := rcon.NewRcon(hldsGameConfig.Host, hldsGameConfig.HldsGamePort, hldsGameConfig.RconPassword)
 

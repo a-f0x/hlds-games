@@ -90,8 +90,7 @@ services:
       - ./docker/users.ini:/hlds/cstrike/addons/amxmodx/configs/users.ini
       - ./docker/csdm/maps.ini:/hlds/cstrike/addons/amxmodx/configs/maps.ini
       - ./out/game_agent:/hlds/game_agent
-
-      - ./data/csstats.dat:/docker/cstrike/addons/amxmodx/data/csstats.dat
+#      - ./data/csstats.dat:/docker/cstrike/addons/amxmodx/data/csstats.dat
     deploy:
       resources:
         limits:

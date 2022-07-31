@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/config"
 	"hlds-games/internal/management"
 	"hlds-games/internal/management/telegram"
-	"log"
 )
 
 func main() {
+	log.SetFormatter(&log.JSONFormatter{})
 	monitoring()
 }
 func monitoring() {
@@ -73,6 +74,7 @@ func monitoring() {
 					t.Reply(fmt.Sprintf("%s:\nError send command. Try again later", game.Name), chatId, messageId)
 					continue
 				}
+				log.Warnf("%s: Rcon command '%s' executed by user '%s'. Result: %s", game.Name, command, botEvent.Rcon.UserName, result.Result)
 				t.Reply(fmt.Sprintf("%s:\n%s", game.Name, result.Result), chatId, messageId)
 			}
 		}

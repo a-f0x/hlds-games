@@ -2,7 +2,7 @@ package log
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 )
 

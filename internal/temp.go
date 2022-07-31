@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/api"
 	"hlds-games/internal/common"
 	"hlds-games/internal/common/rabbit"
@@ -11,7 +12,6 @@ import (
 	"hlds-games/internal/rcon"
 	"hlds-games/internal/stats"
 	"html"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -45,7 +45,7 @@ func testTelegram() {
 	common.FakeTelegramCfg("fake_token")
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
-		log.Fatal(err)
+		log.FIXME(err)
 	}
 	ch := telegram.NewTelegram(config.GetTelegramBotConfig(), repository).Start()
 	for {
@@ -58,7 +58,7 @@ func testTelegram() {
 func testChatRepo() {
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
-		log.Fatal(err)
+		log.FIXME(err)
 	}
 	log.Printf("chats: %v", repository.GetAll())
 	repository.SaveChat(
@@ -84,7 +84,7 @@ func testGrpcRconCommand() {
 	command := "status"
 	result, err := api.ExecuteRconCommand(fmt.Sprintf("127.0.0.1:%d", grpcApiConfig.GrpcApiPort))(context.TODO(), "status")
 	if err != nil {
-		log.Fatalf("fail to execute command %s. %s", command, err.Error())
+		log.FIXMEf("fail to execute command %s. %s", command, err.Error())
 	}
 	log.Printf("status: %s", result.Result)
 
@@ -138,7 +138,7 @@ func consume(rabbitConfig *config.RabbitConfig) {
 	//time.Sleep(time.Duration(5) * time.Second)
 	subscribeGameEventsQueue, err := consumer.Subscribe(context.TODO(), rabbit.GameEventsQueue)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.FIXMEf(err.Error())
 	}
 
 	go func() {
@@ -151,7 +151,7 @@ func consume(rabbitConfig *config.RabbitConfig) {
 	//time.Sleep(time.Duration(5) * time.Second)
 	subscribeHeartBeatQueue, err2 := consumer.Subscribe(context.TODO(), rabbit.HeartBeatQueue)
 	if err2 != nil {
-		log.Fatalf(err2.Error())
+		log.FIXMEf(err2.Error())
 	}
 
 	go func() {
@@ -186,7 +186,7 @@ func readStats() {
 
 	status, err := rcon.GetServerStatus()
 	if err != nil {
-		log.Fatalln(err.Error())
+		log.FIXMEln(err.Error())
 	}
 	log.Printf("status: %s\n", status)
 

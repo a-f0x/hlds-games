@@ -37,6 +37,7 @@ type ExecuteRcon struct {
 	ServerAddress string
 	Command       string
 	MessageId     int
+	UserName      string
 }
 
 type GameButtonType int32

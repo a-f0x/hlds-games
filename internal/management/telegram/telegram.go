@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/config"
 	"hlds-games/internal/management"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -227,6 +227,7 @@ func (t *Telegram) onDirectMessageReceived(update tgbotapi.Update) {
 				ServerAddress: chat.CurrentRconAddress,
 				Command:       text,
 				MessageId:     update.Message.MessageID,
+				UserName:      userName,
 			},
 		}
 	}

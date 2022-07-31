@@ -2,12 +2,12 @@ package launcher
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/common"
 	"hlds-games/internal/config"
 	logReceiver "hlds-games/internal/log"
 	"hlds-games/internal/messages"
 	"hlds-games/internal/rcon"
-	"log"
 	"os/exec"
 	"time"
 )

@@ -3,9 +3,9 @@ package management
 import (
 	"context"
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"hlds-games/internal/common/rabbit"
 	"hlds-games/internal/messages"
-	"log"
 )
 
 //todo разобраться как использовать контекст для отписки и корректного закрытия канала и конекшена ребита
@@ -44,14 +44,16 @@ func collect(
 				m := new(messages.Message[messages.HeartBeatMessagePayload])
 				err := json.Unmarshal(hb, m)
 				if err != nil {
-					log.Fatalf("HeartBeatMessagePayload unmarshal error: %s. Source: %s ", err, hb)
+					log.Errorf("HeartBeatMessagePayload unmarshal error: %s. Source: %s ", err, hb)
+					continue
 				}
 				heartBeatChannel <- *m
 			case ga := <-actionBeatBytesChannel:
 				m := new(messages.Message[messages.ActionMessagePayload])
 				err := json.Unmarshal(ga, m)
 				if err != nil {
-					log.Fatalf("ActionMessagePayload unmarshal error: %s. Source: %s ", err, ga)
+					log.Errorf("ActionMessagePayload unmarshal error: %s. Source: %s ", err, ga)
+					continue
 				}
 				actionChannel <- *m
 			}

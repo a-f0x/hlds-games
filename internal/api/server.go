@@ -3,10 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"hlds-games/internal/config"
 	"hlds-games/internal/rcon"
-	"log"
 	"net"
 )
 

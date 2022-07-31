@@ -2,7 +2,7 @@ package stats
 
 import (
 	"encoding/binary"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 // откопал исходники того как пишется стата стандартая

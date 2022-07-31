@@ -148,4 +148,4 @@ services:
 networks:
   default:
     external: true
-    name: hlds-net
+    name: algol-net
