@@ -3,9 +3,7 @@ version: "3.8"
 services:
   hlds-manager:
     restart: always
-    build:
-      dockerfile: Dockerfile_monitoring
-      context: .
+    image: af0x/hlds-agent:monitoring
     environment:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
