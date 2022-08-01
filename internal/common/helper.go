@@ -54,16 +54,6 @@ func FakeEnvGameCfg() {
 	os.Setenv("GRPC_API_PORT", "2020")
 }
 
-//		Proxy: &TelegramProxyConfig{
-//			Enabled: common.GetEnvBoolValue("TELEGRAM_PROXY_ENABLED"),
-//			Url:     common.GetEnv("TELEGRAM_PROXY_URL"),
-//		},
-//		Bot: &TelegramBotConfig{
-//			Token:            common.GetRequiredEnv("TELEGRAM_BOT_TOKEN"),
-//			ReconnectTimeout: common.GetEnvInt64Value("TELEGRAM_RECONNECT_TIMEOUT_SEC"),
-//			AdminPassword:    common.GetRequiredEnv("TELEGRAM_ADMIN_PASSWORD"),
-//		},
-//	}
 func FakeTelegramCfg(token string) {
 	os.Setenv("TELEGRAM_BOT_TOKEN", token)
 	os.Setenv("TELEGRAM_RECONNECT_TIMEOUT_SEC", "10")

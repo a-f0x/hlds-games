@@ -1,37 +1,21 @@
 version: "3.8"
 
 services:
-  mariadb:
+  hlds-manager:
     restart: always
-    image: mariadb:10.7.4
-    ports:
-      - "3306:3306"
-    expose:
-      - "3306"
+    build:
+      dockerfile: Dockerfile_monitoring
+      context: .
     environment:
-      MYSQL_ROOT_PASSWORD: S3cret
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      EXTERNAL_IP: ${EXTERNAL_IP}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     volumes:
-      - ./mariadb:/var/lib/mysql
-  rabbitmq:
-    restart: always
-    image: rabbitmq:3.9.21-management-alpine
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
-    expose:
-      - "5672"
-      - "15672"
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    deploy:
-      resources:
-        limits:
-          cpus: '1.5'
-          memory: 384M
+      - ./data:/data
+
   fast-download:
     restart: always
     image: af0x/rehlds-fastdl
@@ -44,8 +28,6 @@ services:
     profiles:
       - all
       - cs
-    depends_on:
-      - rabbitmq
     image: af0x/hlds-agent:cs-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
@@ -79,8 +61,6 @@ services:
     profiles:
       - all
       - csdm
-    depends_on:
-      - rabbitmq
     image: af0x/hlds-agent:csdm-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}
@@ -114,8 +94,6 @@ services:
     profiles:
       - all
       - hl
-    depends_on:
-      - rabbitmq
     image: af0x/hlds-agent:hl-nosteam
     environment:
       RCON_PASSWORD: ${RCON_PASSWORD}

@@ -17,8 +17,6 @@ func main() {
 	monitoring()
 }
 func monitoring() {
-	common.FakeEnvRabbit("127.0.0.1")
-	common.FakeTelegramCfg("5424757267:AAEfIfjXElS5Svf9bp1TVz4HpqRNWorA9BA")
 	repository, err := telegram.NewFileChatRepository("./data")
 	if err != nil {
 		log.Fatal(err)
@@ -38,7 +36,7 @@ func monitoring() {
 		log.Fatalf("%s", err.Error())
 	}
 
-	gm := management.NewGameManager("192.168.88.61")
+	gm := management.NewGameManager(common.GetRequiredEnv("EXTERNAL_IP"))
 	for {
 		select {
 		case heartBeat := <-heartBeatChannel:
