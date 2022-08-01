@@ -11,6 +11,7 @@ RUN cd /build/cmd/GAME_MONITOR && \
     CGO_ENABLED=0 go build -v -o monitoring
 
 FROM debian:stable-slim
+RUN apt -y update && apt install -y --reinstall ca-certificates
 WORKDIR /app
 COPY --from=build-env /build/cmd/GAME_MONITOR/monitoring /app
 ENTRYPOINT ./monitoring
