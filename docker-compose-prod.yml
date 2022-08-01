@@ -11,8 +11,9 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       EXTERNAL_IP: ${EXTERNAL_IP}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_RECONNECT_TIMEOUT_SEC: 10
     volumes:
-      - ./docker/data:/data
+      - ./docker/data:/app/data
 
   fast-download:
     restart: always
