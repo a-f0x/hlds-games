@@ -14,7 +14,7 @@ services:
       EXTERNAL_IP: ${EXTERNAL_IP}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     volumes:
-      - ./data:/data
+      - ./docker/data:/data
 
   fast-download:
     restart: always
