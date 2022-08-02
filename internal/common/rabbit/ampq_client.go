@@ -62,8 +62,6 @@ func (ac *amqpClient) handleConnection(isConnectedChan chan<- bool) error {
 	}
 }
 func (ac *amqpClient) initConnection(isConnectedChan chan<- bool) error {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/", ac.user, ac.password, ac.host, ac.port)
 	log.Printf("Trying to connect amqp: %s:%d\n", ac.host, ac.port)
 	conn, openConnectionError := amqp.Dial(url)
@@ -79,8 +77,10 @@ func (ac *amqpClient) initConnection(isConnectedChan chan<- bool) error {
 		conn.Close()
 		return channelError
 	}
+	ac.mu.Lock()
 	ac.channel = channel
 	ac.connection = conn
+	ac.mu.Unlock()
 
 	isConnectedChan <- true
 	log.Printf("Connection success amqp: %s:%d\n", ac.host, ac.port)
